@@ -54,7 +54,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Customer Dashboard'),
+        title: const Text('Welcome to Customer Page'),
         actions: [
           IconButton(
             icon: const Icon(Icons.exit_to_app),
@@ -135,8 +135,7 @@ class ReusableBottomNavBar extends StatelessWidget {
   }
 }
 
-// Home Page - Display customer's own cleaning requests
-
+// Updated Home Page - Display customer's own cleaning requests with delete functionality
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -148,7 +147,6 @@ class _HomePageState extends State<HomePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Fetch customer's own cleaning requests from Firestore
   Stream<QuerySnapshot> getCleaningRequests() {
     final user = _auth.currentUser;
     if (user == null) {
@@ -169,7 +167,7 @@ class _HomePageState extends State<HomePage> {
       );
 
       if (result == true) {
-        if (!mounted) return; // Ensure widget is mounted
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -184,6 +182,59 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Function to delete a cleaning request
+  Future<void> _deleteRequest(BuildContext context, String docId) async {
+    try {
+      // Show confirmation dialog
+      final bool? confirm = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Delete Request'),
+            content: const Text(
+              'Are you sure you want to delete this request?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Delete'),
+              ),
+            ],
+          );
+        },
+      );
+
+      // Proceed with deletion if confirmed
+      if (confirm == true) {
+        await _firestore.collection('cleaning_requests').doc(docId).delete();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Request deleted successfully!',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error deleting request: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting request: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -192,7 +243,7 @@ class _HomePageState extends State<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Good Evening',
+            'Good Day!..',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
@@ -229,6 +280,7 @@ class _HomePageState extends State<HomePage> {
                 }
 
                 if (snapshot.hasError) {
+                  print('StreamBuilder error: ${snapshot.error}');
                   return const Center(child: Text('Error loading requests.'));
                 }
 
@@ -246,26 +298,129 @@ class _HomePageState extends State<HomePage> {
 
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 8),
-                      child: ListTile(
-                        title: Text(
-                          'Request for ${request['name'] ?? 'Unknown'}',
-                        ),
-                        subtitle: Text(
-                          'Service Date: ${request['date'] ?? 'N/A'}',
-                        ),
-                        trailing: Text(request['status'] ?? 'Pending'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (context) => RequestDetailsPage(
-                                    docId: docId,
-                                    request: request,
-                                  ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 4,
+                      child: SizedBox(
+                        height: 150, // Fixed height of ListTile
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16.0),
+                          title: Text(
+                            'Request for ${request['name'] ?? 'Unknown'}',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
-                          );
-                        },
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Date: ${request['date'] ?? 'N/A'}',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              if (request['status'] == 'accepted')
+                                Text(
+                                  'Cleaner: ${request['cleaner_name'] ?? 'Unknown'}',
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              if (request['cancellation_reason'] != null)
+                                Text(
+                                  'Cancelled: ${request['cancellation_reason']}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 17.0),
+                                child: Text(
+                                  request['status'] ?? 'Pending',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                              if (request['images'] != null &&
+                                  (request['images'] as List).isNotEmpty)
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.grey,
+                                      width: 0,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 4,
+                                        offset: const Offset(2, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: SizedBox(
+                                    width: 100, // Proportional width
+                                    height:
+                                        120, // Adjusted to fit within ListTile height
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Image.network(
+                                        request['images'][0], // Show first image
+                                        fit: BoxFit.cover, // Fill the space
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          return const Icon(
+                                            Icons.broken_image,
+                                            size:
+                                                60, // Adjusted error icon size
+                                            color: Colors.grey,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(
+                                width: 8,
+                              ), // Space before delete button
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                  size: 24,
+                                ),
+                                onPressed: () => _deleteRequest(context, docId),
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => RequestDetailsPage(
+                                      docId: docId,
+                                      request: request,
+                                    ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     );
                   },
@@ -327,6 +482,9 @@ class RequestDetailsPage extends StatelessWidget {
               Text('Rooms: ${request['rooms'] ?? 'N/A'}'),
               Text('Service Date: ${request['date'] ?? 'N/A'}'),
               Text('Status: ${request['status'] ?? 'N/A'}'),
+              if (request['status'] == 'accepted' &&
+                  request['cleaner_name'] != null)
+                Text('Accepted by: ${request['cleaner_name']}'),
               const SizedBox(height: 16),
               const Text(
                 'House Images',
@@ -366,7 +524,6 @@ class RequestDetailsPage extends StatelessWidget {
 }
 
 // Cleaning Form Page
-
 class CleaningFormPage extends StatefulWidget {
   const CleaningFormPage({super.key});
 
@@ -378,16 +535,39 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _roomsController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _additionalNotesController =
+      TextEditingController(); // Placeholder field
   final ImagePicker _picker = ImagePicker();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   List<XFile> _houseImages = [];
   bool _isUploading = false;
-  bool _imageUploadFailed = false; // Track if image upload fails
+  bool _imageUploadFailed = false;
+  int? _selectedRooms; // Variable to store the selected number of rooms
 
-  // Upload images to Cloudinary
+  // List of room options (1 to 10 rooms)
+  final List<int> _roomOptions = List.generate(
+    10,
+    (index) => index + 1,
+  ); // [1, 2, ..., 10]
+
+  // Date picker function
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(), // Restrict to today or future dates
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) {
+      setState(() {
+        _dateController.text =
+            "${picked.toLocal()}".split(' ')[0]; // Format: YYYY-MM-DD
+      });
+    }
+  }
+
   Future<List<String>> _uploadImages() async {
     List<String> imageUrls = [];
     if (_houseImages.isEmpty) {
@@ -408,7 +588,7 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
       } catch (e) {
         print('Image upload failed: $e');
         setState(() {
-          _imageUploadFailed = true; // Mark that an image upload failed
+          _imageUploadFailed = true;
         });
       }
     }
@@ -416,14 +596,12 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
     return imageUrls;
   }
 
-  // Upload image to Cloudinary (Web)
   Future<String> _uploadToCloudinaryWeb(List<int> imageBytes) async {
     const cloudinaryUrl =
-        'https://api.cloudinary.com/v1_1/dk1thw6tq/image/upload'; // Replace 'dk1thw6tq' with your Cloudinary cloud name
+        'https://api.cloudinary.com/v1_1/dk1thw6tq/image/upload';
     final request =
         http.MultipartRequest('POST', Uri.parse(cloudinaryUrl))
-          ..fields['upload_preset'] =
-              'house_images' // Ensure this preset exists
+          ..fields['upload_preset'] = 'house_images'
           ..files.add(
             http.MultipartFile.fromBytes(
               'file',
@@ -445,10 +623,9 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
     }
   }
 
-  // Upload image to Cloudinary (Mobile)
   Future<String> _uploadToCloudinaryMobile(File file) async {
     const cloudinaryUrl =
-        'https://api.cloudinary.com/v1_1/dk1thw6tq/image/upload'; // Replace 'dk1thw6tq' with your Cloudinary cloud name
+        'https://api.cloudinary.com/v1_1/dk1thw6tq/image/upload';
     final request =
         http.MultipartRequest('POST', Uri.parse(cloudinaryUrl))
           ..fields['upload_preset'] = 'house_images'
@@ -467,7 +644,6 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
     }
   }
 
-  // Pick multiple images
   Future<void> _pickImages() async {
     final List<XFile>? pickedFiles = await _picker.pickMultiImage();
     if (pickedFiles != null) {
@@ -480,18 +656,31 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
+      // Check if images are selected
+      if (_houseImages.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please select at least one house picture before submitting.',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return; // Exit the function if no images are selected
+      }
+
       setState(() {
         _isUploading = true;
-        _imageUploadFailed = false; // Reset the flag
+        _imageUploadFailed = false;
       });
 
       try {
         print('Starting form submission...');
-        // Upload images to Cloudinary
         List<String> imageUrls = await _uploadImages();
         print('Image URLs: $imageUrls');
 
-        // Check if user is authenticated
         final user = _auth.currentUser;
         if (user == null) {
           print('User not logged in. Cannot submit form.');
@@ -499,35 +688,32 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
         }
         print('User authenticated: ${user.uid}');
 
-        // Prepare data to save
         final requestData = {
           'name': _nameController.text,
           'address': _addressController.text,
-          'rooms': _roomsController.text,
+          'rooms': _selectedRooms, // Use the selected integer value directly
           'date': _dateController.text,
+          'additional_notes': _additionalNotesController.text, // Optional field
           'images': imageUrls,
-          'timestamp':
-              FieldValue.serverTimestamp(), // Add timestamp for sorting
-          'status': 'pending', // Default status
-          'user_id': user.uid, // Save user ID for filtering requests later
+          'timestamp': FieldValue.serverTimestamp(),
+          'status': 'pending',
+          'user_id': user.uid,
         };
         print('Prepared data to save: $requestData');
 
-        // Save data to Firestore
         print('Saving data to Firestore in collection: cleaning_requests');
         await FirebaseFirestore.instance
             .collection('cleaning_requests')
             .add(requestData);
         print('Successfully saved data to Firestore');
 
-        // Navigate back with a success flag
-        Navigator.pop(context, true); // Indicate success
+        Navigator.pop(context, true);
       } catch (e) {
         print('Error submitting form: $e');
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error submitting form: $e')));
-        Navigator.pop(context, false); // Indicate failure
+        Navigator.pop(context, false);
       } finally {
         setState(() => _isUploading = false);
       }
@@ -537,99 +723,215 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cleaning Form')),
+      appBar: AppBar(
+        elevation: 2, // Subtle shadow like in the checkout form
+        // Removed the title: 'Cleaning Form'
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
-                  validator:
-                      (value) => value!.isEmpty ? 'Enter your name' : null,
-                ),
-                TextFormField(
-                  controller: _addressController,
-                  decoration: const InputDecoration(labelText: 'Address'),
-                  validator: (value) => value!.isEmpty ? 'Enter address' : null,
-                ),
-                TextFormField(
-                  controller: _roomsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Number of Rooms',
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator:
-                      (value) => value!.isEmpty ? 'Enter room count' : null,
-                ),
-                TextFormField(
-                  controller: _dateController,
-                  decoration: const InputDecoration(labelText: 'Service Date'),
-                  validator:
-                      (value) => value!.isEmpty ? 'Enter service date' : null,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'House Pictures',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
+        child: Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ..._houseImages.map(
-                      (image) =>
-                          kIsWeb
-                              ? FutureBuilder<Uint8List>(
-                                // FutureBuilder to load the image
-                                future: image.readAsBytes(),
-                                builder: (context, snapshot) {
-                                  if (snapshot.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return CircularProgressIndicator();
-                                  }
-                                  if (snapshot.hasError || !snapshot.hasData) {
-                                    return Text('Error loading image');
-                                  }
-                                  return Image.memory(
-                                    snapshot.data!,
+                    const Text(
+                      'Cleaning Form',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Full name on card',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        hintText: 'Example: John Jason Doe',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator:
+                          (value) => value!.isEmpty ? 'Enter your name' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Address',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextFormField(
+                      controller: _addressController,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter your address',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator:
+                          (value) => value!.isEmpty ? 'Enter address' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Number of Rooms',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    DropdownButtonFormField<int>(
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                      ),
+                      value: _selectedRooms,
+                      items:
+                          _roomOptions.map((int rooms) {
+                            return DropdownMenuItem<int>(
+                              value: rooms,
+                              child: Text(rooms.toString()),
+                            );
+                          }).toList(),
+                      onChanged: (int? newValue) {
+                        setState(() {
+                          _selectedRooms = newValue;
+                        });
+                      },
+                      validator:
+                          (value) =>
+                              value == null
+                                  ? 'Please select the number of rooms'
+                                  : null,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Service Date',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextFormField(
+                                controller: _dateController,
+                                decoration: const InputDecoration(
+                                  hintText: 'YYYY-MM-DD',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator:
+                                    (value) =>
+                                        value!.isEmpty
+                                            ? 'Select a service date'
+                                            : null,
+                                readOnly: true,
+                                onTap: () => _selectDate(context),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Additional Notes',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextFormField(
+                                controller: _additionalNotesController,
+                                decoration: const InputDecoration(
+                                  hintText: 'Optional notes',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (value) => null, // Optional field
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'House Pictures',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        ..._houseImages.map(
+                          (image) =>
+                              kIsWeb
+                                  ? FutureBuilder<Uint8List>(
+                                    future: image.readAsBytes(),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return CircularProgressIndicator();
+                                      }
+                                      if (snapshot.hasError ||
+                                          !snapshot.hasData) {
+                                        return Text('Error loading image');
+                                      }
+                                      return Image.memory(
+                                        snapshot.data!,
+                                        width: 100,
+                                        height: 100,
+                                      );
+                                    },
+                                  )
+                                  : Image.file(
+                                    File(image.path),
                                     width: 100,
                                     height: 100,
-                                  );
-                                },
-                              )
-                              : Image.file(
-                                File(image.path),
-                                width: 100,
-                                height: 100,
+                                  ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_a_photo, size: 40),
+                          onPressed: _pickImages,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _isUploading
+                        ? const Center(child: CircularProgressIndicator())
+                        : SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _submitForm,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add_a_photo, size: 40),
-                      onPressed: _pickImages,
-                    ),
+                            ),
+                            child: const Text(
+                              'Submit',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                    if (_imageUploadFailed)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Text(
+                          'One or more images failed to upload. The request was submitted without images.',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                _isUploading
-                    ? const Center(child: CircularProgressIndicator())
-                    : ElevatedButton(
-                      onPressed: _submitForm,
-                      child: const Text('Submit'),
-                    ),
-                if (_imageUploadFailed)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Text(
-                      'One or more images failed to upload. The request was submitted without images.',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-              ],
+              ),
             ),
           ),
         ),
@@ -641,8 +943,8 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
   void dispose() {
     _nameController.dispose();
     _addressController.dispose();
-    _roomsController.dispose();
     _dateController.dispose();
+    _additionalNotesController.dispose();
     super.dispose();
   }
 }
@@ -690,7 +992,6 @@ class _ProfilePageState extends State<ProfilePage> {
     _loadUserProfile();
   }
 
-  // Fetch User Data from Firestore
   Future<void> _loadUserProfile() async {
     final user = _auth.currentUser;
     if (user != null) {
@@ -707,7 +1008,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // Upload Image to Cloudinary and Firestore
   Future<void> _uploadImage() async {
     final picker = ImagePicker();
     XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -718,16 +1018,13 @@ class _ProfilePageState extends State<ProfilePage> {
       String imageUrl = '';
 
       if (kIsWeb) {
-        // Web: Read bytes from the picked file
         final bytes = await pickedFile.readAsBytes();
         imageUrl = await _uploadToCloudinaryWeb(bytes);
       } else {
-        // Mobile: Use the file path for upload
         final file = File(pickedFile.path);
         imageUrl = await _uploadToCloudinaryMobile(file);
       }
 
-      // Update Firestore with the uploaded image URL
       await _updateFirestore(imageUrl);
       setState(() {
         _profileImageUrl = imageUrl;
@@ -744,7 +1041,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // Upload image to Cloudinary for web
   Future<String> _uploadToCloudinaryWeb(List<int> imageBytes) async {
     const cloudinaryUrl =
         'https://api.cloudinary.com/v1_1/dk1thw6tq/image/upload';
@@ -768,7 +1064,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // Upload image to Cloudinary for mobile
   Future<String> _uploadToCloudinaryMobile(File file) async {
     const cloudinaryUrl =
         'https://api.cloudinary.com/v1_1/dk1thw6tq/image/upload';
@@ -786,7 +1081,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // Update Firestore with the image URL
   Future<void> _updateFirestore(String imageUrl) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -837,7 +1131,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Helper to Build Profile Fields
   Widget _buildProfileField(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
