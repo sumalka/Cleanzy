@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "132466580752",
+    "project_id": "clean-app-11c2b",
+    "storage_bucket": "clean-app-11c2b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:132466580752:android:9cf0043307409efc2e5995",
+        "android_client_info": {
+          "package_name": "com.example.cleaning_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFjrQyfRxgOV9m_dhakLlwe-VK_OeYgBs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
