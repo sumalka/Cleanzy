@@ -126,7 +126,7 @@ class ReusableBottomNavBar extends StatelessWidget {
   }
 }
 
-// HomePage - Display all cleaning requests
+// HomePage - Display pending cleaning requests and accepted requests for the current cleaner
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -137,10 +137,31 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Fetch cleaning requests from Firestore
+  // Fetch pending cleaning requests (visible to all cleaners)
   Stream<QuerySnapshot> getCleaningRequests() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return Stream.empty();
+    }
+
     return _firestore
         .collection('cleaning_requests')
+        .where('status', isEqualTo: 'pending')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
+
+  // Fetch accepted cleaning requests for the current cleaner (Fixed syntax error here)
+  Stream<QuerySnapshot> getAcceptedRequests() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return Stream.empty();
+    }
+
+    return _firestore
+        .collection('cleaning_requests')
+        .where('status', isEqualTo: 'accepted') // Fixed: Added colon (:)
+        .where('cleaner_id', isEqualTo: user.uid)
         .orderBy('timestamp', descending: true)
         .snapshots();
   }
@@ -153,11 +174,12 @@ class _HomePageState extends State<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Cleaning Requests',
+            'Pending Cleaning Requests',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           Expanded(
+            flex: 1,
             child: StreamBuilder<QuerySnapshot>(
               stream: getCleaningRequests(),
               builder: (context, snapshot) {
@@ -165,9 +187,13 @@ class _HomePageState extends State<HomePage> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return const Center(
-                    child: Text('No cleaning requests available.'),
+                    child: Text('No pending cleaning requests available.'),
                   );
                 }
 
@@ -208,13 +234,128 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
+          const Text(
+            'My Accepted Requests',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            flex: 1,
+            child: StreamBuilder<QuerySnapshot>(
+              stream: getAcceptedRequests(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text('No accepted requests.'));
+                }
+
+                return ListView.builder(
+                  itemCount: snapshot.data!.docs.length,
+                  itemBuilder: (context, index) {
+                    var request =
+                        snapshot.data!.docs[index].data()
+                            as Map<String, dynamic>;
+                    var docId = snapshot.data!.docs[index].id;
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      child: ListTile(
+                        title: Text(
+                          'Request from ${request['name'] ?? 'Unknown'}',
+                        ),
+                        subtitle: Text(
+                          'Service Date: ${request['date'] ?? 'N/A'}',
+                        ),
+                        trailing: Text(request['status'] ?? 'Accepted'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => RequestDetailsPage(
+                                    docId: docId,
+                                    request: request,
+                                  ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-// Request Details Page - Display details and allow status updates
+// Cancel Reason Dialog Widget
+class CancelReasonDialog extends StatefulWidget {
+  final Function(String) onConfirm;
+
+  const CancelReasonDialog({super.key, required this.onConfirm});
+
+  @override
+  _CancelReasonDialogState createState() => _CancelReasonDialogState();
+}
+
+class _CancelReasonDialogState extends State<CancelReasonDialog> {
+  final TextEditingController _reasonController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Cancel Request'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Please provide a reason for cancellation:'),
+          TextField(
+            controller: _reasonController,
+            decoration: const InputDecoration(hintText: 'Enter reason'),
+            maxLines: 3,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () {
+            if (_reasonController.text.isNotEmpty) {
+              widget.onConfirm(_reasonController.text);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Please provide a reason')),
+              );
+            }
+          },
+          child: const Text('Confirm'),
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _reasonController.dispose();
+    super.dispose();
+  }
+}
+
+// Request Details Page
 class RequestDetailsPage extends StatelessWidget {
   final String docId;
   final Map<String, dynamic> request;
@@ -227,20 +368,85 @@ class RequestDetailsPage extends StatelessWidget {
 
   Future<void> _updateStatus(BuildContext context, String newStatus) async {
     try {
+      final cleaner = FirebaseAuth.instance.currentUser;
+      if (cleaner == null) {
+        throw Exception('Cleaner not logged in.');
+      }
+
+      final cleanerDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(cleaner.uid)
+              .get();
+      final cleanerName = cleanerDoc.data()?['name'] ?? 'Unknown Cleaner';
+
       await FirebaseFirestore.instance
           .collection('cleaning_requests')
           .doc(docId)
-          .update({'status': newStatus});
+          .update({
+            'status': newStatus,
+            'cleaner_id': cleaner.uid,
+            'cleaner_name': cleanerName,
+          });
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Status updated to $newStatus')));
-      Navigator.pop(context); // Refresh the list
+      Navigator.pop(context); // Back to HomePage
     } catch (e) {
-      print('Error updating status: $e');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error updating status: $e')));
     }
+  }
+
+  Future<void> _cancelRequest(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return CancelReasonDialog(
+          onConfirm: (reason) async {
+            try {
+              final cleaner = FirebaseAuth.instance.currentUser;
+              if (cleaner == null) {
+                throw Exception('Cleaner not logged in.');
+              }
+
+              // Update Firestore to cancel the request
+              await FirebaseFirestore.instance
+                  .collection('cleaning_requests')
+                  .doc(docId)
+                  .update({
+                    'status': 'pending',
+                    'cleaner_id': null,
+                    'cleaner_name': null,
+                    'cancellation_reason': reason,
+                    'cancelled_by': cleaner.uid,
+                    'cancellation_timestamp': FieldValue.serverTimestamp(),
+                  });
+
+              // Close the dialog
+              Navigator.pop(dialogContext);
+
+              // Show confirmation message
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Request cancelled successfully'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+
+              // Redirect to Cleaner Home Page
+              Navigator.pop(context); // Back to HomePage
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error cancelling request: $e')),
+              );
+            }
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -302,11 +508,19 @@ class RequestDetailsPage extends StatelessWidget {
                       onPressed: () => _updateStatus(context, 'accepted'),
                       child: const Text('Accept'),
                     ),
-                  if (request['status'] == 'accepted')
+                  if (request['status'] == 'accepted') ...[
                     ElevatedButton(
                       onPressed: () => _updateStatus(context, 'completed'),
                       child: const Text('Mark as Completed'),
                     ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
+                      onPressed: () => _cancelRequest(context),
+                      child: const Text('Cancel Request'),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -350,7 +564,6 @@ class _ProfilePageState extends State<ProfilePage> {
     _loadUserProfile();
   }
 
-  // Fetch User Data from Firestore
   Future<void> _loadUserProfile() async {
     final user = _auth.currentUser;
     if (user != null) {
@@ -367,7 +580,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // Upload Image to Cloudinary and Firestore
   Future<void> _uploadImage() async {
     final picker = ImagePicker();
     XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -378,33 +590,27 @@ class _ProfilePageState extends State<ProfilePage> {
       String imageUrl = '';
 
       if (kIsWeb) {
-        // Web: Read bytes from the picked file
         final bytes = await pickedFile.readAsBytes();
         imageUrl = await _uploadToCloudinaryWeb(bytes);
       } else {
-        // Mobile: Use the file path for upload
         final file = File(pickedFile.path);
         imageUrl = await _uploadToCloudinaryMobile(file);
       }
 
-      // Update Firestore with the uploaded image URL
       await _updateFirestore(imageUrl);
       setState(() {
         _profileImageUrl = imageUrl;
       });
-      print('Image uploaded successfully: $imageUrl');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Profile image updated successfully!')),
       );
     } catch (e) {
-      print('Error uploading image: $e');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error uploading image: $e')));
     }
   }
 
-  // Upload image to Cloudinary for web
   Future<String> _uploadToCloudinaryWeb(List<int> imageBytes) async {
     const cloudinaryUrl =
         'https://api.cloudinary.com/v1_1/dk1thw6tq/image/upload';
@@ -428,7 +634,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // Upload image to Cloudinary for mobile
   Future<String> _uploadToCloudinaryMobile(File file) async {
     const cloudinaryUrl =
         'https://api.cloudinary.com/v1_1/dk1thw6tq/image/upload';
@@ -446,7 +651,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // Update Firestore with the image URL
   Future<void> _updateFirestore(String imageUrl) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -497,7 +701,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Helper to Build Profile Fields
   Widget _buildProfileField(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
