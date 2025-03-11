@@ -395,55 +395,57 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                 ),
                                 const SizedBox(height: 10),
-                                GestureDetector(
-                                  onTap: _login,
-                                  child: AnimatedContainer(
-                                    width: 260,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 9,
-                                    ),
-                                    duration: Duration(
-                                      milliseconds: 150,
-                                    ), // Smooth scaling animation
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [
-                                          Color(0xFF4CAF50),
-                                          Color(0xFF66BB6A),
+                                Center(
+                                  child: GestureDetector(
+                                    onTap: _login,
+                                    child: AnimatedContainer(
+                                      width: 260,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 9,
+                                      ),
+                                      duration: Duration(
+                                        milliseconds: 150,
+                                      ), // Smooth scaling animation
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xFF4CAF50),
+                                            Color(0xFF66BB6A),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(15),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.green.withAlpha(
+                                              (0.5 * 255).toInt(),
+                                            ),
+                                            blurRadius: 10,
+                                            spreadRadius: 5,
+                                            offset: Offset(
+                                              0,
+                                              4,
+                                            ), // Shadow position for 3D effect
+                                          ),
                                         ],
                                       ),
-                                      borderRadius: BorderRadius.circular(15),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.green.withAlpha(
-                                            (0.5 * 255).toInt(),
-                                          ),
-                                          blurRadius: 10,
-                                          spreadRadius: 5,
-                                          offset: Offset(
-                                            0,
-                                            4,
-                                          ), // Shadow position for 3D effect
-                                        ),
-                                      ],
-                                    ),
-                                    child: Center(
-                                      child:
-                                          _isLoading
-                                              ? CircularProgressIndicator(
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<
-                                                      Color
-                                                    >(Colors.white),
-                                              )
-                                              : Text(
-                                                'Login',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.w600,
+                                      child: Center(
+                                        child:
+                                            _isLoading
+                                                ? CircularProgressIndicator(
+                                                  valueColor:
+                                                      AlwaysStoppedAnimation<
+                                                        Color
+                                                      >(Colors.white),
+                                                )
+                                                : Text(
+                                                  'Login',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                                 ),
-                                              ),
+                                      ),
                                     ),
                                   ),
                                 ),
