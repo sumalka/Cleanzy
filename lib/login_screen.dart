@@ -78,44 +78,82 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() {
-      _isLoading = true; // Start loading
-    });
+    setState(() => _isLoading = true);
     try {
+      // Attempt to sign in with email and password
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      _navigateToDashboard(userCredential.user!.uid);
-    } on FirebaseAuthException catch (e) {
-      String errorMessage;
-      switch (e.code) {
-        case 'invalid-email':
-          errorMessage = 'The email address is not valid.';
-          break;
-        case 'user-not-found':
-          errorMessage = 'No user found with this email.';
-          break;
-        case 'wrong-password':
-          errorMessage = 'Incorrect password. Please try again.';
-          break;
-        case 'user-disabled':
-          errorMessage = 'This user account has been disabled.';
-          break;
-        case 'too-many-requests':
-          errorMessage = 'Too many login attempts. Try again later.';
-          break;
-        default:
-          errorMessage = 'Incorrect Email or Password.';
+
+      // Check if the user's token is still valid
+      User? user = userCredential.user;
+      if (user != null) {
+        // Force refresh the token to avoid expired token issues
+        await user.getIdToken(true); // This refreshes the token if expired
+
+        // Fetch user role from Firestore
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+
+        if (userDoc.exists) {
+          String role = userDoc['role'];
+          if (role == 'Admin') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AdminDashboard()),
+            );
+          } else if (role == 'Customer') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CustomerDashboard(),
+              ),
+            );
+          } else if (role == 'Cleaner') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const CleanerDashboard()),
+            );
+          } else {
+            _showError('Invalid role. Contact support.');
+          }
+        } else {
+          _showError('User not found. Please sign up.');
+        }
+      } else {
+        _showError('Unable to authenticate user.');
       }
-      _showError(errorMessage);
     } catch (e) {
-      _showError('An unexpected error occurred. Please try again.');
+      // Enhanced error handling
+      if (e is FirebaseAuthException) {
+        switch (e.code) {
+          case 'user-not-found':
+            _showError('No user found with that email.');
+            break;
+          case 'wrong-password':
+            _showError('Incorrect password.');
+            break;
+          case 'invalid-email':
+            _showError('Invalid email format.');
+            break;
+          case 'auth/id-token-expired':
+          case 'token-expired':
+            _showError('Your session has expired. Please log in again.');
+            break;
+          case 'user-disabled':
+            _showError('This user account has been disabled.');
+            break;
+          default:
+            _showError('Login failed: ${e.message}');
+            break;
+        }
+      } else {
+        _showError('An unexpected error occurred: $e');
+      }
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false; // Stop loading
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -176,7 +214,11 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _showError(String message) {
+    if (!mounted)
+      return; // Prevents calling this function if the widget is unmounted
+
     final overlay = Overlay.of(context);
+
     final overlayEntry = OverlayEntry(
       builder:
           (context) => Positioned(
@@ -193,13 +235,12 @@ class _LoginScreenState extends State<LoginScreen>
                     255,
                     255,
                   ).withAlpha((0.8 * 255).toInt()),
-
                   elevation: 1,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Padding(
-                    padding: EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(10),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -210,11 +251,11 @@ class _LoginScreenState extends State<LoginScreen>
                           reverse: false,
                           animate: true,
                         ),
-                        SizedBox(width: 1),
+                        const SizedBox(width: 1),
                         Text(
                           message,
-                          style: TextStyle(
-                            color: const Color.fromARGB(255, 119, 117, 117),
+                          style: const TextStyle(
+                            color: Color.fromARGB(255, 119, 117, 117),
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
                           ),
@@ -228,12 +269,13 @@ class _LoginScreenState extends State<LoginScreen>
           ),
     );
 
-    // Insert the overlay entry into the overlay
     overlay.insert(overlayEntry);
 
-    // Remove the overlay entry after a certain delay (e.g., 3 seconds)
-    Future.delayed(Duration(seconds: 3), () {
-      overlayEntry.remove();
+    // Remove overlay after delay
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        overlayEntry.remove();
+      }
     });
   }
 
@@ -450,75 +492,6 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                 ),
                                 const SizedBox(height: 10),
-
-                                // Column(
-                                //   mainAxisAlignment: MainAxisAlignment.end,
-                                //   children: [
-                                //     Row(
-                                //       mainAxisAlignment:
-                                //           MainAxisAlignment.center,
-                                //       children: [
-                                //         GestureDetector(
-                                //           onTap: _signInWithGoogle,
-                                //           child: Row(
-                                //             mainAxisAlignment:
-                                //                 MainAxisAlignment.center,
-                                //             children: [
-                                //               const SizedBox(
-                                //                 width: 10,
-                                //               ), // Space between the logo and text
-                                //               const Text(
-                                //                 'Sign with',
-                                //                 style: TextStyle(
-                                //                   fontWeight: FontWeight.w500,
-                                //                   fontSize:
-                                //                       14, // Same size as SignUp
-                                //                   color: Colors.grey,
-                                //                 ),
-                                //               ),
-                                //               const SizedBox(width: 5), //
-                                //               Image.asset(
-                                //                 'assets/google_logo.png',
-                                //                 height: 20,
-                                //               ),
-                                //             ],
-                                //           ),
-                                //         ),
-                                //         const SizedBox(width: 20), // Space
-                                //         Text(
-                                //           '|', // Divider Line
-                                //           style: TextStyle(
-                                //             fontSize: 14,
-                                //             color: Colors.grey,
-                                //           ),
-                                //         ),
-                                //         const SizedBox(width: 10),
-                                //         TextButton(
-                                //           onPressed:
-                                //               () => Navigator.push(
-                                //                 context,
-                                //                 MaterialPageRoute(
-                                //                   builder:
-                                //                       (context) =>
-                                //                           SignupScreen(),
-                                //                 ),
-                                //               ),
-                                //           child: const Text(
-                                //             'Sign Up',
-                                //             style: TextStyle(
-                                //               fontSize: 14,
-                                //               color: Colors.grey,
-                                //             ),
-                                //           ),
-                                //         ),
-                                //       ],
-                                //     ),
-                                //   ],
-                                // ),
-                                //
-                                //
-                                //
-                                //
                               ],
                             ),
                           ),

@@ -8,7 +8,7 @@ import 'customer_dashboard.dart';
 import 'cleaner_dashboard.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_sign_in/google_sign_in.dart'; // Import Google Sign-In 🔥
+import 'package:google_sign_in/google_sign_in.dart'; // Import Google Sign-In
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,7 +26,7 @@ void main() async {
     );
     GoogleSignIn _ = GoogleSignIn(
       clientId:
-          '132466580752-ftug1pd078eil7fqo5v4ubv19g37c6at.apps.googleusercontent.com', // Client ID
+          '132466580752-ftug1pd078eil7fqo5v4ubv19g37c6at.apps.googleusercontent.com',
     );
   } else {
     await Firebase.initializeApp();
