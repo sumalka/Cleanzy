@@ -226,12 +226,16 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       print('Error deleting request: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error deleting request: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+
+      Future.microtask(() {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting request: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      });
     }
   }
 
