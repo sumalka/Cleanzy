@@ -27,27 +27,3 @@ flutter run
 pause
 
 
-
-
-
-
-
-cd android
-gradlew.bat --stop
-gradlew.bat --no-daemon clean
-gradlew.bat build
-
-cd..
-flutter run
-
-pause
-cd android
-gradlew.bat --stop
-gradlew.bat --no-daemon clean
-gradlew.bat build
-
-cd..
-flutter run
-
-pause
-
