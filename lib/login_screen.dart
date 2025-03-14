@@ -430,7 +430,12 @@ class _LoginScreenState extends State<LoginScreen>
                                         style: TextStyle(
                                           fontWeight: FontWeight.w500,
                                           fontSize: 10,
-                                          color: Colors.grey,
+                                          color: const Color.fromARGB(
+                                            255,
+                                            108,
+                                            106,
+                                            106,
+                                          ),
                                         ),
                                       ),
                                     ),
