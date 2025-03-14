@@ -90,6 +90,39 @@ class _CustomerDashboardState extends State<CustomerDashboard>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white, // Base color for light theme
+        elevation: 15, // Increased for stronger 3D effect
+        shadowColor: const Color.fromARGB(
+          255,
+          136,
+          133,
+          133,
+        ).withOpacity(0.1), // Slightly darker shadow for depth
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white, // Top (light source simulation)
+                Colors.grey.shade100, // Bottom (subtle depth)
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color.fromARGB(
+                  255,
+                  172,
+                  170,
+                  170,
+                ).withOpacity(0.1),
+                blurRadius: 5,
+                spreadRadius: 2,
+                offset: const Offset(0, 4), // Offset for 3D "lifted" effect
+              ),
+            ],
+          ),
+        ),
         title: Stack(
           alignment: Alignment.center,
           children: [
@@ -136,9 +169,23 @@ class _CustomerDashboardState extends State<CustomerDashboard>
           IconButton(
             icon:
                 _profileImageUrl != null
-                    ? CircleAvatar(
-                      radius: 15,
-                      backgroundImage: NetworkImage(_profileImageUrl!),
+                    ? Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color.fromARGB(
+                            255,
+                            105,
+                            106,
+                            105,
+                          ), // Green to match your theme
+                          width: 2.0, // Border thickness
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 25,
+                        backgroundImage: NetworkImage(_profileImageUrl!),
+                      ),
                     )
                     : const Icon(Icons.person),
             onPressed: () => _navigateToProfile(context),
@@ -285,12 +332,15 @@ class _HomePageState extends State<HomePage> {
             child: _buildCategory(context, 'Cleaning', Icons.cleaning_services),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Your Cleaning Requests',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue,
+          Center(
+            child: const Text(
+              'Cleaning Requests',
+              style: TextStyle(
+                fontFamily: 'Popins',
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color.fromARGB(255, 56, 55, 55),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -321,120 +371,7 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 4,
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(16.0),
-                        title: Text(
-                          'Request for ${request['name'] ?? 'Unknown'}',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[600],
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Date: ${request['date'] ?? 'N/A'}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            if (request['status'] == 'accepted')
-                              Text(
-                                'Cleaner: ${request['cleaner_name'] ?? 'Unknown'}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            if (request['cancellation_reason'] != null)
-                              Text(
-                                'Cancelled: ${request['cancellation_reason']}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.red,
-                                ),
-                              ),
-                            if (request['status'] == 'completed' &&
-                                request['verification_code'] != null)
-                              Text(
-                                'Code: ${request['verification_code']}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.green,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            Text(
-                              'Price: \$${request['price']?.toStringAsFixed(2) ?? 'N/A'}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.pink[700],
-                              ),
-                            ),
-                          ],
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 17.0),
-                              child: Text(
-                                displayStatus,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            if (request['images'] != null &&
-                                (request['images'] as List).isNotEmpty)
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  boxShadow: [
-                                    const BoxShadow(
-                                      color: Colors.black26,
-                                      blurRadius: 4,
-                                      offset: Offset(2, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: SizedBox(
-                                  width: 100,
-                                  height: 120,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(6),
-                                    child: Image.network(
-                                      request['images'][0],
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              const Icon(
-                                                Icons.broken_image,
-                                                size: 60,
-                                                color: Colors.grey,
-                                              ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            const SizedBox(width: 8),
-                            if (request['status'] == 'pending')
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
-                                  size: 24,
-                                ),
-                                onPressed: () => _deleteRequest(context, docId),
-                              ),
-                          ],
-                        ),
+                      child: GestureDetector(
                         onTap:
                             () => Navigator.push(
                               context,
@@ -446,6 +383,143 @@ class _HomePageState extends State<HomePage> {
                                     ),
                               ),
                             ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Left side: Title and Subtitle
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Request form ${request['name'] ?? 'Unknown'}',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color.fromARGB(255, 72, 71, 71),
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Date: ${request['date'] ?? 'N/A'}',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        if (request['status'] == 'accepted')
+                                          Text(
+                                            'Cleaner: ${request['cleaner_name'] ?? 'Unknown'}',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        if (request['cancellation_reason'] !=
+                                            null)
+                                          Text(
+                                            'Cancelled: ${request['cancellation_reason']}',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        if (request['status'] == 'completed' &&
+                                            request['verification_code'] !=
+                                                null)
+                                          Text(
+                                            'Code: ${request['verification_code']}',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        Text(
+                                          'Price: \$${request['price']?.toStringAsFixed(2) ?? 'N/A'}',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.pink,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Right side: Image, Status, and Delete Button
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  if (request['images'] != null &&
+                                      (request['images'] as List).isNotEmpty)
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        boxShadow: const [
+                                          BoxShadow(
+                                            color: Colors.black26,
+                                            blurRadius: 4,
+                                            offset: Offset(2, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(6),
+                                        child: Image.network(
+                                          request['images'][0],
+                                          width: 100,
+                                          height: 100,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  const Icon(
+                                                    Icons.broken_image,
+                                                    size: 60,
+                                                    color: Colors.grey,
+                                                  ),
+                                        ),
+                                      ),
+                                    ),
+                                  if (request['images'] != null &&
+                                      (request['images'] as List).isNotEmpty)
+                                    const SizedBox(height: 8),
+                                  Text(
+                                    displayStatus,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          displayStatus == 'completed'
+                                              ? Colors.green
+                                              : Colors.black,
+                                    ),
+                                  ),
+                                  if (request['status'] == 'pending') ...[
+                                    const SizedBox(height: 8),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        size: 24,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed:
+                                          () => _deleteRequest(context, docId),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                   },
@@ -844,6 +918,7 @@ class CleaningFormPage extends StatefulWidget {
 }
 
 class _CleaningFormPageState extends State<CleaningFormPage> {
+  bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
@@ -960,7 +1035,9 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isUploading = true);
+      _isLoading = true; // Show loading indicator
       try {
+        await Future.delayed(Duration(seconds: 2));
         final user = _auth.currentUser;
         if (user == null) throw Exception('User not logged in');
         final imageUrls = await _uploadImages();
@@ -1005,6 +1082,7 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
       } finally {
         if (mounted) {
           setState(() => _isUploading = false);
+          setState(() => _isLoading = false);
         }
       }
     }
@@ -1013,31 +1091,48 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          'Cleaning Service Request',
+          'Service Request',
           style: TextStyle(
-            color: Colors.blue, // Blue color for the title
+            color: Color.fromARGB(255, 87, 87, 88),
             fontWeight: FontWeight.bold,
+            fontSize: 24,
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 1,
+        centerTitle: true,
       ),
       body:
           _isUploading
               ? const Center(child: CircularProgressIndicator())
               : Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 16.0,
+                ),
                 child: Form(
                   key: _formKey,
                   child: SingleChildScrollView(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Request a Cleaning Service',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color.fromARGB(255, 87, 87, 88),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 30),
                         _buildTextField(
                           controller: _nameController,
-                          label: 'Full Name',
+                          label: 'Name',
                           validator:
                               (value) =>
                                   value!.isEmpty
@@ -1121,7 +1216,7 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
                           maxLines: 3,
                           isRequired: false,
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                         const Text(
                           'Upload House Images (Optional)',
                           style: TextStyle(
@@ -1130,24 +1225,39 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
                             color: Colors.black87,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         ElevatedButton.icon(
                           onPressed: _pickImages,
-                          icon: const Icon(Icons.image, color: Colors.white),
+                          icon: const Icon(
+                            Icons.image,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                           label: const Text(
                             'Pick Images',
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Colors.blue, // Blue color for the button
+                            backgroundColor: const Color.fromARGB(
+                              255,
+                              33,
+                              243,
+                              54,
+                            ),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
+                              horizontal: 20,
                               vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 15),
                         _houseImages.isNotEmpty
                             ? SizedBox(
                               height: 120,
@@ -1187,9 +1297,12 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
                             )
                             : const Text(
                               'No images selected.',
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14,
+                              ),
                             ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                         Text(
                           'Estimated Price: \$${_calculatePrice().toStringAsFixed(2)}',
                           style: const TextStyle(
@@ -1198,26 +1311,50 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
                             color: Colors.black87,
                           ),
                         ),
-                        const SizedBox(height: 32),
-                        ElevatedButton(
-                          onPressed: _submitForm,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Colors.blue, // Blue color for the submit button
-                            minimumSize: const Size(double.infinity, 50),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                        const SizedBox(height: 30),
+                        GestureDetector(
+                          onTap: _isLoading ? null : _submitForm,
+                          child: AnimatedContainer(
+                            width: 260,
+                            padding: const EdgeInsets.symmetric(vertical: 9),
+                            duration: const Duration(milliseconds: 150),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF4CAF50), Color(0xFF66BB6A)],
+                              ),
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.green.withAlpha(
+                                    (0.5 * 255).toInt(),
+                                  ),
+                                  blurRadius: 10,
+                                  spreadRadius: 5,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                          ),
-                          child: const Text(
-                            'Submit Request',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                            child: Center(
+                              child:
+                                  _isLoading
+                                      ? const CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                      )
+                                      : const Text(
+                                        'Submit Request',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                             ),
                           ),
                         ),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -1236,22 +1373,64 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
     bool isRequired = true,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Colors.black54),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.blue, width: 2),
+      padding: const EdgeInsets.only(bottom: 20.0),
+      child: SizedBox(
+        width: 300, // Enforce a specific width for the TextField
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: const Color.fromARGB(255, 84, 82, 82).withOpacity(0.15),
+                blurRadius: 2,
+                spreadRadius: 2,
+                offset: const Offset(1, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            decoration: InputDecoration(
+              labelText: label,
+              labelStyle: const TextStyle(
+                color: Colors.black54,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Color.fromARGB(255, 157, 187, 106),
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.red, width: 1),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.red, width: 2),
+              ),
+            ),
+            readOnly: readOnly,
+            maxLines: maxLines,
+            onTap: onTap,
+            validator: isRequired ? validator : null,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
           ),
         ),
-        readOnly: readOnly,
-        maxLines: maxLines,
-        onTap: onTap,
-        validator: isRequired ? validator : null,
       ),
     );
   }
@@ -1264,29 +1443,78 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
     String? Function(T?)? validator,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: DropdownButtonFormField<T>(
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Colors.black54),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          focusedBorder: OutlineInputBorder(
+      padding: const EdgeInsets.only(bottom: 20.0),
+      child: SizedBox(
+        width: 300, // Enforce a specific width for the DropdownField
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.blue, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color.fromARGB(255, 84, 82, 82).withOpacity(0.15),
+                blurRadius: 2,
+                spreadRadius: 2,
+                offset: const Offset(1, 2),
+              ),
+            ],
+          ),
+          child: DropdownButtonFormField<T>(
+            decoration: InputDecoration(
+              labelText: label,
+              labelStyle: const TextStyle(
+                color: Colors.black54,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Color.fromARGB(255, 60, 204, 91),
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.red, width: 1),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.red, width: 2),
+              ),
+            ),
+            value: value,
+            items:
+                items
+                    .map(
+                      (T item) => DropdownMenuItem<T>(
+                        value: item,
+                        child: Text(
+                          item.toString(),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+            onChanged: onChanged,
+            validator: validator,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+            icon: const Icon(Icons.arrow_drop_down, color: Colors.blue),
           ),
         ),
-        value: value,
-        items:
-            items
-                .map(
-                  (T item) => DropdownMenuItem<T>(
-                    value: item,
-                    child: Text(item.toString()),
-                  ),
-                )
-                .toList(),
-        onChanged: onChanged,
-        validator: validator,
       ),
     );
   }

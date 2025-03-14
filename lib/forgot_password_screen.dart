@@ -91,7 +91,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Matching light theme background
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           Center(
@@ -103,7 +103,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   children: [
                     // Main animation
                     Lottie.asset(
-                      'assets/forgot_password.json', // Replace with your own animation if desired
+                      'assets/forgot_password.json',
                       height: 250,
                       repeat: true,
                     ),

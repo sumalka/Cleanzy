@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use, duplicate_ignore
+
 import 'package:cleaning_app/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -93,6 +95,40 @@ class _CleanerDashboardState extends State<CleanerDashboard>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white, // Base color for light theme
+        elevation: 15, // Increased for stronger 3D effect
+        shadowColor: const Color.fromARGB(
+          255,
+          136,
+          133,
+          133,
+          // ignore: deprecated_member_use
+        ).withOpacity(0.1), // Slightly darker shadow for depth
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white, // Top (light source simulation)
+                Colors.grey.shade100, // Bottom (subtle depth)
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color.fromARGB(
+                  255,
+                  172,
+                  170,
+                  170,
+                ).withOpacity(0.1),
+                blurRadius: 5,
+                spreadRadius: 2,
+                offset: const Offset(0, 4), // Offset for 3D "lifted" effect
+              ),
+            ],
+          ),
+        ),
         title: Stack(
           alignment: Alignment.center,
           children: [
@@ -137,19 +173,45 @@ class _CleanerDashboardState extends State<CleanerDashboard>
         ),
         actions: [
           IconButton(
-            icon: CircleAvatar(
-              radius: 15,
-              backgroundImage:
-                  _profileImageUrl != null
-                      ? NetworkImage(_profileImageUrl!)
-                      : const AssetImage('assets/default_profile.png')
-                          as ImageProvider,
-              backgroundColor: Colors.grey[300],
+            icon: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color.fromARGB(
+                    255,
+                    108,
+                    110,
+                    108,
+                  ), // Green border to match your theme
+                  width: 2.0, // Border thickness
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color.fromARGB(
+                      255,
+                      255,
+                      255,
+                      255,
+                    ).withAlpha((0.5 * 255).toInt()),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: CircleAvatar(
+                radius: 25,
+                backgroundImage:
+                    _profileImageUrl != null
+                        ? NetworkImage(_profileImageUrl!)
+                        : const AssetImage('assets/default_profile.png')
+                            as ImageProvider,
+                backgroundColor: Colors.grey[300],
+              ),
             ),
             onPressed: () => _navigateToProfile(context),
             tooltip: 'Profile',
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 10), // Assuming you want to keep this spacing
         ],
       ),
       body: _pages[_currentIndex],
@@ -176,7 +238,7 @@ class ReusableBottomNavBar extends StatelessWidget {
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
-      selectedItemColor: Colors.blue,
+      selectedItemColor: const Color.fromARGB(255, 45, 142, 105),
       unselectedItemColor: Colors.grey,
       showUnselectedLabels: true,
       items: const [

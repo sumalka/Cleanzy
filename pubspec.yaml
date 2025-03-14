@@ -89,6 +89,9 @@ flutter:
      - assets/signup.json
      - assets/login.json
      - assets/welcome.json
+     - assets/success.json
+     - assets/failure.json
+     - assets/forgot_password.json
      - assets/sad face.json
      - assets/splash.png
      - assets/logo.png
