@@ -7,10 +7,10 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter/foundation.dart'; // For kIsWeb check
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'dart:math'; // For generating random code
-import 'package:google_fonts/google_fonts.dart'; // For Google Fonts
+import 'dart:math';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
