@@ -1,3 +1,4 @@
+import 'package:cleaning_app/cleaner_dashboard.dart';
 import 'package:cleaning_app/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,7 +11,6 @@ import 'package:flutter/foundation.dart'; // For kIsWeb check
 import 'package:firebase_core/firebase_core.dart';
 import 'dart:math'; // For generating random code
 import 'package:google_fonts/google_fonts.dart'; // For Google Fonts
-import 'package:lottie/lottie.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,10 +41,6 @@ class _CustomerDashboardState extends State<CustomerDashboard>
     with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
   String? _profileImageUrl;
-  // ignore: unused_field
-  String? _fullName;
-  // ignore: unused_field
-  String? _email;
   late AnimationController _glitterController;
 
   final List<Widget> _pages = [const HomePage(), const CreditsPage()];
@@ -52,14 +48,14 @@ class _CustomerDashboardState extends State<CustomerDashboard>
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    _loadProfileImage();
     _glitterController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat();
   }
 
-  Future<void> _loadUserProfile() async {
+  Future<void> _loadProfileImage() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final userDoc =
@@ -68,21 +64,11 @@ class _CustomerDashboardState extends State<CustomerDashboard>
               .doc(user.uid)
               .get();
       if (userDoc.exists) {
-        final data = userDoc.data();
-        if (mounted) {
-          // Check if the widget is still mounted before calling setState
-          setState(() {
-            _profileImageUrl = data?['profileImageUrl'];
-            _fullName =
-                data?['name'] ?? 'Unknown'; // Changed from 'fullName' to 'name'
-            _email = data?['email'] ?? 'No Email';
-          });
-        }
+        setState(() => _profileImageUrl = userDoc.data()?['profileImageUrl']);
       }
     }
   }
 
-  // ignore: unused_element
   void _onItemTapped(int index) {
     setState(() => _currentIndex = index);
   }
@@ -91,7 +77,7 @@ class _CustomerDashboardState extends State<CustomerDashboard>
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const ProfilePage()),
-    ).then((_) => _loadUserProfile());
+    ).then((_) => _loadProfileImage());
   }
 
   @override
@@ -103,117 +89,117 @@ class _CustomerDashboardState extends State<CustomerDashboard>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(65), // Set your custom height here
-        child: AppBar(
-          elevation: 12, // Enhanced elevation for stronger 3D feel
-          shadowColor: const Color.fromARGB(
-            255,
-            176,
-            176,
-            178,
-          ).withOpacity(0.4), // Softer shadow for depth
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(
-              bottom: Radius.circular(22),
-            ), // Slightly smoother curve
-          ),
-          title: Stack(
-            alignment: Alignment.center,
-            children: [
-              Text(
-                'Cleanzy',
-                style: GoogleFonts.pacifico(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: const Color.fromARGB(255, 120, 120, 120),
-                  shadows: [
-                    Shadow(
-                      blurRadius: 6.0, // More blur for a deeper effect
-                      color: const Color.fromARGB(
-                        255,
-                        133,
-                        130,
-                        130,
-                      ).withOpacity(0.3), // Stronger shadow for 3D illusion
-                      offset: Offset(3, 4), // Slightly bigger offset
-                    ),
-                    Shadow(
-                      blurRadius: 4.2,
-                      color: Colors.white.withOpacity(
-                        0.5,
-                      ), // Highlight effect for glow
-                      offset: Offset(-2, -2),
-                    ),
-                  ],
-                ).copyWith(fontFamilyFallback: ['Roboto']),
-              ),
-              ...List.generate(
-                5,
-                (index) => Positioned(
-                  left: 10.0 * (index - 2) + (index.isEven ? -20 : 20),
-                  top: 10.0 * (index % 3) - 10,
-                  child: AnimatedBuilder(
-                    animation: _glitterController,
-                    builder: (context, child) {
-                      return FadeTransition(
-                        opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-                          CurvedAnimation(
-                            parent: _glitterController,
-                            curve: Interval(
-                              index * 0.2,
-                              (index + 1) * 0.2,
-                              curve: Curves.easeInOut,
-                            ),
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.star,
-                          size: 12.0,
-                          color: Colors.yellow.withOpacity(0.7),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+      appBar: AppBar(
+        backgroundColor: Colors.white, // Base color for light theme
+        elevation: 15, // Increased for stronger 3D effect
+        shadowColor: const Color.fromARGB(
+          255,
+          136,
+          133,
+          133,
+        ).withOpacity(0.1), // Slightly darker shadow for depth
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white, // Top (light source simulation)
+                Colors.grey.shade100, // Bottom (subtle depth)
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color.fromARGB(
+                  255,
+                  172,
+                  170,
+                  170,
+                ).withOpacity(0.1),
+                blurRadius: 5,
+                spreadRadius: 2,
+                offset: const Offset(0, 4), // Offset for 3D "lifted" effect
               ),
             ],
           ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 10),
-              child: IconButton(
-                icon:
-                    _profileImageUrl != null
-                        ? Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle, // Make the border circular
-                            border: Border.all(
-                              color: const Color.fromARGB(255, 90, 87, 87),
-                              width: 2,
-                            ), // Gray border
+        ),
+        title: Stack(
+          alignment: Alignment.center,
+          children: [
+            Text(
+              'Cleanzy',
+              style: GoogleFonts.greatVibes(
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent,
+              ).copyWith(fontFamilyFallback: ['Roboto']),
+            ),
+            ...List.generate(
+              5,
+              (index) => Positioned(
+                left: 10.0 * (index - 2) + (index.isEven ? -20 : 20),
+                top: 10.0 * (index % 3) - 10,
+                child: AnimatedBuilder(
+                  animation: _glitterController,
+                  builder: (context, child) {
+                    return FadeTransition(
+                      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+                        CurvedAnimation(
+                          parent: _glitterController,
+                          curve: Interval(
+                            index * 0.2,
+                            (index + 1) * 0.2,
+                            curve: Curves.easeInOut,
                           ),
-                          child: CircleAvatar(
-                            radius: 20,
-                            backgroundImage: NetworkImage(_profileImageUrl!),
-                          ),
-                        )
-                        : const Icon(Icons.person, size: 45),
-                onPressed: () => _navigateToProfile(context),
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.star,
+                        size: 12.0,
+                        color: Colors.yellow.withOpacity(0.7),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon:
+                _profileImageUrl != null
+                    ? Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color.fromARGB(
+                            255,
+                            105,
+                            106,
+                            105,
+                          ), // Green to match your theme
+                          width: 2.0, // Border thickness
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 25,
+                        backgroundImage: NetworkImage(_profileImageUrl!),
+                      ),
+                    )
+                    : const Icon(Icons.person),
+            onPressed: () => _navigateToProfile(context),
+          ),
+        ],
       ),
       body: _pages[_currentIndex],
+      bottomNavigationBar: ReusableBottomNavBar(
+        currentIndex: _currentIndex,
+        onTap: _onItemTapped,
+      ),
     );
   }
-
-  //
 }
-
-//
 
 class ReusableBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -339,345 +325,306 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SingleChildScrollView(
-            // ✅ Enables full-page scrolling
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 12), // Placeholder for FAB height
-                Padding(
-                  padding: const EdgeInsets.only(left: 13),
-                  child: const Text(
-                    'My Requests',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 75, 75, 75),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                StreamBuilder<QuerySnapshot>(
-                  stream: getCleaningRequests(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return const Center(
-                        child: Text('Error loading requests.'),
-                      );
-                    }
-                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return const Center(
-                        child: Text('No cleaning requests yet.'),
-                      );
-                    }
-
-                    return ListView.builder(
-                      shrinkWrap: true, // ✅ Makes it fit inside Column
-                      physics:
-                          const NeverScrollableScrollPhysics(), // ✅ Prevents nested scrolling issues
-                      itemCount: snapshot.data!.docs.length,
-                      itemBuilder: (context, index) {
-                        var request =
-                            snapshot.data!.docs[index].data()
-                                as Map<String, dynamic>;
-                        var docId = snapshot.data!.docs[index].id;
-                        String displayStatus =
-                            request['status'] == 'accepted_pending_customer'
-                                ? 'Awaiting Your Approval'
-                                : request['status'] ?? 'Pending';
-
-                        return SizedBox(
-                          height: 130,
-                          child: Card(
-                            margin: const EdgeInsets.symmetric(vertical: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+          Center(
+            child: _buildCategory(context, 'Cleaning', Icons.cleaning_services),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: const Text(
+              'Cleaning Requests',
+              style: TextStyle(
+                fontFamily: 'Popins',
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color.fromARGB(255, 56, 55, 55),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: getCleaningRequests(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting)
+                  return const Center(child: CircularProgressIndicator());
+                if (snapshot.hasError)
+                  return const Center(child: Text('Error loading requests.'));
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+                  return const Center(child: Text('No cleaning requests yet.'));
+                return ListView.builder(
+                  itemCount: snapshot.data!.docs.length,
+                  itemBuilder: (context, index) {
+                    var request =
+                        snapshot.data!.docs[index].data()
+                            as Map<String, dynamic>;
+                    var docId = snapshot.data!.docs[index].id;
+                    String displayStatus =
+                        request['status'] == 'accepted_pending_customer'
+                            ? 'Awaiting Your Approval'
+                            : request['status'] ?? 'Pending';
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 4,
+                      child: GestureDetector(
+                        onTap:
+                            () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => RequestDetailsPage(
+                                      docId: docId,
+                                      request: request,
+                                    ),
+                              ),
                             ),
-                            elevation: 4,
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(8.0),
-                              leading:
-                                  request['images'] != null &&
-                                          (request['images'] as List).isNotEmpty
-                                      ? ClipRRect(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Left side: Title and Subtitle
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Request form ${request['name'] ?? 'Unknown'}',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color.fromARGB(255, 72, 71, 71),
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Date: ${request['date'] ?? 'N/A'}',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        if (request['status'] == 'accepted')
+                                          Text(
+                                            'Cleaner: ${request['cleaner_name'] ?? 'Unknown'}',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        if (request['cancellation_reason'] !=
+                                            null)
+                                          Text(
+                                            'Cancelled: ${request['cancellation_reason']}',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        if (request['status'] == 'completed' &&
+                                            request['verification_code'] !=
+                                                null)
+                                          Text(
+                                            'Code: ${request['verification_code']}',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        Text(
+                                          'Price: \$${request['price']?.toStringAsFixed(2) ?? 'N/A'}',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.pink,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Right side: Image, Status, and Delete Button
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  if (request['images'] != null &&
+                                      (request['images'] as List).isNotEmpty)
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        boxShadow: const [
+                                          BoxShadow(
+                                            color: Colors.black26,
+                                            blurRadius: 4,
+                                            offset: Offset(2, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: Image.network(
                                           request['images'][0],
-                                          width: 60,
-                                          height: 80,
+                                          width: 100,
+                                          height: 100,
                                           fit: BoxFit.cover,
                                           errorBuilder:
                                               (context, error, stackTrace) =>
                                                   const Icon(
                                                     Icons.broken_image,
-                                                    size: 40,
+                                                    size: 60,
                                                     color: Colors.grey,
                                                   ),
                                         ),
-                                      )
-                                      : const Icon(
-                                        Icons.image_not_supported,
-                                        size: 40,
-                                        color: Colors.grey,
                                       ),
-                              title: Text(
-                                'Request from you',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[600],
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
+                                    ),
+                                  if (request['images'] != null &&
+                                      (request['images'] as List).isNotEmpty)
+                                    const SizedBox(height: 8),
                                   Text(
-                                    'Date: ${request['date'] ?? 'N/A'}',
+                                    displayStatus,
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          displayStatus == 'completed'
+                                              ? Colors.green
+                                              : Colors.black,
                                     ),
                                   ),
-                                  if (request['status'] == 'accepted')
-                                    Text(
-                                      'Cleaner: ${request['cleaner_name'] ?? 'Unknown'}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  if (request['cancellation_reason'] != null)
-                                    Text(
-                                      'Cancelled: ${request['cancellation_reason']}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
+                                  if (request['status'] == 'pending') ...[
+                                    const SizedBox(height: 8),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        size: 24,
                                         color: Colors.red,
                                       ),
+                                      onPressed:
+                                          () => _deleteRequest(context, docId),
                                     ),
-                                  if (request['status'] == 'completed' &&
-                                      request['verification_code'] != null)
-                                    Text(
-                                      'Code: ${request['verification_code']}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.green,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  Text(
-                                    'Price: \$${request['price']?.toStringAsFixed(2) ?? 'N/A'}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.pink[700],
-                                    ),
-                                  ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        displayStatus,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      if (request['status'] == 'pending')
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.delete,
-                                            color: Colors.red,
-                                            size: 20,
-                                          ),
-                                          onPressed:
-                                              () => _deleteRequest(
-                                                context,
-                                                docId,
-                                              ),
-                                          padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(),
-                                        ),
-                                    ],
-                                  ),
+                                  ],
                                 ],
                               ),
-                              onTap:
-                                  () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => RequestDetailsScreen(
-                                            requestDocumentId: docId,
-                                            requestData: request,
-                                          ),
-                                    ),
-                                  ),
-                            ),
+                            ],
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     );
                   },
-                ),
-              ],
+                );
+              },
             ),
-          ),
-          Positioned(
-            bottom: 16,
-            right: 1,
-            child: _buildCategory(context, 'Cleaning', 'assets/cleaning.json'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCategory(
-    BuildContext context,
-    String title,
-    String lottieAsset,
-  ) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Circular Text Around FAB
-        Positioned(
-          child: Transform.rotate(
-            angle: 0, // Adjust the rotation slightly for better alignment
-            child: Padding(
-              padding: const EdgeInsets.only(top: 80),
-              child: Text(
-                "ADD REQUEST",
-                style: const TextStyle(
-                  fontSize: 8,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 74, 75, 74),
-                ),
-              ),
-            ),
+  Widget _buildCategory(BuildContext context, String title, IconData icon) {
+    return GestureDetector(
+      onTap: () => _navigateToCategoryForm(context, title),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: Colors.blue.shade100,
+            child: Icon(icon, size: 30, color: Colors.blueAccent),
           ),
-        ),
-        // Floating Action Button with Lottie Animation
-        FloatingActionButton(
-          onPressed: () => _navigateToCategoryForm(context, title),
-          backgroundColor: const Color.fromARGB(255, 123, 129, 122),
-          elevation: 1.0, // Adds shadow for floating effect
-          shape: const CircleBorder(), // ✅ Makes the button circular
-          child: SizedBox(
-            width: 400,
-            height: 400,
-            child: Lottie.asset(
-              lottieAsset, // ✅ Use JSON animation instead of icon
-              fit: BoxFit.fitWidth,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  //
-}
-
-class RequestDetailsScreen extends StatelessWidget {
-  final String requestDocumentId;
-  final Map<String, dynamic> requestData;
-
-  const RequestDetailsScreen({
-    super.key,
-    required this.requestDocumentId,
-    required this.requestData,
-  });
-
-  String _createVerificationCode() {
-    const String characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    Random randomGenerator = Random();
-    return String.fromCharCodes(
-      Iterable.generate(
-        6,
-        (_) =>
-            characters.codeUnitAt(randomGenerator.nextInt(characters.length)),
+          const SizedBox(height: 8),
+          Text(title, style: const TextStyle(fontSize: 14)),
+        ],
       ),
     );
   }
+}
 
-  Future<void> _setRequestAsCompleted(BuildContext screenContext) async {
+class RequestDetailsPage extends StatelessWidget {
+  final String docId;
+  final Map<String, dynamic> request;
+
+  const RequestDetailsPage({
+    super.key,
+    required this.docId,
+    required this.request,
+  });
+
+  String _generateVerificationCode() {
+    const String chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    Random rnd = Random();
+    return String.fromCharCodes(
+      Iterable.generate(6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
+    );
+  }
+
+  Future<void> _markAsCompleted(BuildContext context) async {
     try {
+      final verificationCode = _generateVerificationCode();
       await FirebaseFirestore.instance
           .collection('cleaning_requests')
-          .doc(requestDocumentId)
+          .doc(docId)
           .update({
             'status': 'completed',
             'completion_timestamp': FieldValue.serverTimestamp(),
-            'price': requestData['price'],
+            'verification_code': verificationCode,
+            'price': request['price'],
           });
-      ScaffoldMessenger.of(screenContext).showSnackBar(
-        const SnackBar(
-          content: Text('Request marked as completed successfully'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request marked as completed')),
       );
-      Navigator.pop(screenContext);
-    } catch (error) {
-      ScaffoldMessenger.of(screenContext).showSnackBar(
-        SnackBar(
-          content: Text('Failed to mark request as completed: $error'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 2),
-        ),
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error marking request as completed: $e')),
       );
     }
   }
 
-  Future<void> _cancelCleaningRequest(BuildContext screenContext) async {
+  Future<void> _cancelRequest(BuildContext context) async {
     await showDialog(
-      context: screenContext,
+      context: context,
       builder:
-          (dialogContext) => CancellationReasonDialog(
-            onConfirmCancellation: (reason) async {
+          (dialogContext) => CancelReasonDialog(
+            onConfirm: (reason) async {
               try {
-                final assignedCleanerId = requestData['cleaner_id'];
+                final currentCleanerId = request['cleaner_id'];
                 await FirebaseFirestore.instance
                     .collection('cleaning_requests')
-                    .doc(requestDocumentId)
+                    .doc(docId)
                     .update({
                       'status': 'pending',
                       'cleaner_id': null,
                       'cleaner_name': null,
-                      'cleaner_details': null,
+                      'cleaner_details': null, // Clear cleaner details
                       'cancellation_reason': reason,
                       'cancelled_by': FirebaseAuth.instance.currentUser?.uid,
                       'cancellation_timestamp': FieldValue.serverTimestamp(),
                       'previous_cleaner_ids':
-                          assignedCleanerId != null
-                              ? FieldValue.arrayUnion([assignedCleanerId])
+                          currentCleanerId != null
+                              ? FieldValue.arrayUnion([currentCleanerId])
                               : FieldValue.arrayUnion([]),
                     });
                 Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(screenContext).showSnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Request canceled and made available again'),
-                    backgroundColor: Colors.green,
-                    duration: Duration(seconds: 2),
                   ),
                 );
-                Navigator.pop(screenContext);
-              } catch (error) {
-                ScaffoldMessenger.of(screenContext).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to cancel request: $error'),
-                    backgroundColor: Colors.red,
-                    duration: const Duration(seconds: 2),
-                  ),
+                Navigator.pop(context);
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error canceling request: $e')),
                 );
               }
             },
@@ -685,599 +632,271 @@ class RequestDetailsScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _approveAssignedCleaner(BuildContext screenContext) async {
+  Future<void> _approveCleaner(BuildContext context) async {
     try {
-      final generatedCode =
-          _createVerificationCode(); // Generate code once here
       await FirebaseFirestore.instance
           .collection('cleaning_requests')
-          .doc(requestDocumentId)
-          .update({
-            'status': 'accepted',
-            'verification_code': generatedCode, // Store code in Firestore
-          });
-      ScaffoldMessenger.of(screenContext).showSnackBar(
-        const SnackBar(
-          content: Text('Cleaner approved successfully'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      Navigator.pop(screenContext);
-    } catch (error) {
-      ScaffoldMessenger.of(screenContext).showSnackBar(
-        SnackBar(
-          content: Text('Failed to approve cleaner: $error'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+          .doc(docId)
+          .update({'status': 'accepted'});
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Cleaner approved')));
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error approving cleaner: $e')));
     }
   }
 
-  Future<void> _rejectAssignedCleaner(BuildContext screenContext) async {
+  Future<void> _rejectCleaner(BuildContext context) async {
     await showDialog(
-      context: screenContext,
+      context: context,
       builder:
-          (dialogContext) => CancellationReasonDialog(
-            onConfirmCancellation: (reason) async {
+          (dialogContext) => CancelReasonDialog(
+            onConfirm: (reason) async {
               try {
-                final assignedCleanerId = requestData['cleaner_id'];
+                final currentCleanerId = request['cleaner_id'];
                 await FirebaseFirestore.instance
                     .collection('cleaning_requests')
-                    .doc(requestDocumentId)
+                    .doc(docId)
                     .update({
                       'status': 'pending',
                       'cleaner_id': null,
                       'cleaner_name': null,
-                      'cleaner_details': null,
+                      'cleaner_details': null, // Clear cleaner details
                       'cancellation_reason': reason,
                       'cancelled_by': FirebaseAuth.instance.currentUser?.uid,
                       'cancellation_timestamp': FieldValue.serverTimestamp(),
                       'previous_cleaner_ids': FieldValue.arrayUnion([
-                        assignedCleanerId,
+                        currentCleanerId,
                       ]),
                     });
                 Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(screenContext).showSnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(
                       'Cleaner rejected, request is available again',
                     ),
-                    backgroundColor: Color.fromARGB(255, 76, 199, 80),
-                    duration: Duration(seconds: 2),
                   ),
                 );
-                Navigator.pop(screenContext);
-              } catch (error) {
-                ScaffoldMessenger.of(screenContext).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to reject cleaner: $error'),
-                    backgroundColor: const Color.fromARGB(255, 170, 69, 62),
-                    duration: Duration(seconds: 2),
-                  ),
+                Navigator.pop(context);
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error rejecting cleaner: $e')),
                 );
               }
             },
           ),
     );
   }
-  //
-  //
 
   @override
-  Widget build(BuildContext screenContext) {
-    String requestStatusDisplay =
-        requestData['status'] == 'accepted_pending_customer'
+  Widget build(BuildContext context) {
+    String displayStatus =
+        request['status'] == 'accepted_pending_customer'
             ? 'Awaiting Your Approval'
-            : requestData['status'] ?? 'Pending';
-    final cleanerInfo = requestData['cleaner_details'] as Map<String, dynamic>?;
-
-    final deviceWidth = MediaQuery.of(screenContext).size.width;
-    final isSmallDevice = deviceWidth < 600;
+            : request['status'] ?? 'Pending';
+    final cleanerDetails = request['cleaner_details'] as Map<String, dynamic>?;
 
     return Scaffold(
-      appBar: AppBar(
-        elevation: 12, // Enhanced elevation for stronger 3D feel
-        shadowColor: const Color.fromARGB(
-          255,
-          176,
-          176,
-          178,
-        ).withOpacity(0.4), // Softer shadow for depth
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(22),
-          ), // Slightly smoother curve
-        ),
-        title: const Text(
-          'Request Details',
-          style: TextStyle(
-            color: Color.fromARGB(255, 87, 87, 88),
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black),
-      ),
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(isSmallDevice ? 12.0 : 20.0),
-          child: Center(
-            // Centering the content inside the body
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(child: _displaySectionTitle('House Details')),
-                  const SizedBox(height: 12),
-                  Center(
-                    child: _displayHouseImages(
-                      requestData['images'] as List<dynamic>? ?? [],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Adding a Card for 3D effect
-                  Card(
-                    elevation: 8, // 3D shadow effect
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        12,
-                      ), // Rounded corners
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _displayInfoRow('Name', requestData['name'] ?? 'N/A'),
-                          _displayInfoRow(
-                            'Address',
-                            requestData['address'] ?? 'N/A',
-                          ),
-                          _displayInfoRow(
-                            'Rooms',
-                            requestData['rooms']?.toString() ?? 'N/A',
-                          ),
-                          _displayInfoRow(
-                            'Bathrooms',
-                            requestData['bathrooms']?.toString() ?? 'N/A',
-                          ),
-                          _displayInfoRow(
-                            'Living Rooms',
-                            requestData['living_rooms']?.toString() ?? 'N/A',
-                          ),
-                          _displayInfoRow(
-                            'Flooring Type',
-                            requestData['flooring_type'] ?? 'N/A',
-                          ),
-                          _displayInfoRow(
-                            'Service Date',
-                            requestData['date'] ?? 'N/A',
-                          ),
-                          _displayInfoRow(
-                            'Status',
-                            requestStatusDisplay,
-                            isBold: true,
-                          ),
-                          _displayInfoRow(
-                            'Price',
-                            '\$${requestData['price']?.toStringAsFixed(2) ?? 'N/A'}',
-                            textColor: Colors.pink[700],
-                            isBold: true,
-                          ),
-                          if (requestData['status'] == 'accepted' &&
-                              requestData['cleaner_name'] != null)
-                            _displayInfoRow(
-                              'Accepted by',
-                              requestData['cleaner_name'],
-                              isBold: true,
-                            ),
-                          if ((requestData['status'] == 'accepted' ||
-                                  requestData['status'] == 'completed') &&
-                              requestData['verification_code'] != null)
-                            _displayInfoRow(
-                              'Verification Code',
-                              requestData['verification_code'],
-                              textColor: Colors.green,
-                              isBold: true,
-                            ),
-                          if (requestData['cancellation_reason'] != null)
-                            _displayInfoRow(
-                              'Cancellation Reason',
-                              requestData['cancellation_reason'],
-                              textColor: Colors.red,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  if (requestData['status'] == 'accepted_pending_customer' ||
-                      requestData['status'] == 'accepted' ||
-                      requestData['status'] == 'completed') ...[
-                    _displaySectionTitle('Cleaner Details'),
-                    const SizedBox(height: 12),
-                    if (cleanerInfo != null) ...[
-                      if (cleanerInfo['profileImageUrl'] != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              cleanerInfo['profileImageUrl'],
-                              width: isSmallDevice ? 100 : 120,
-                              height: isSmallDevice ? 100 : 120,
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (_, __, ___) => const Icon(
-                                    Icons.error,
-                                    size: 50,
-                                    color: Colors.grey,
-                                  ),
-                            ),
-                          ),
-                        ),
-                      _displayDetailsContainer([
-                        _displayInfoRow(
-                          'Name',
-                          cleanerInfo['fullName'] ?? 'N/A',
-                        ),
-                        _displayInfoRow(
-                          'Age',
-                          cleanerInfo['age']?.toString() ?? 'N/A',
-                        ),
-                        _displayInfoRow(
-                          'Gender',
-                          cleanerInfo['gender'] ?? 'N/A',
-                        ),
-                        _displayInfoRow('Email', cleanerInfo['email'] ?? 'N/A'),
-                        _displayInfoRow(
-                          'Phone Number',
-                          cleanerInfo['phoneNumber'] ?? 'N/A',
-                        ),
-                        _displayInfoRow(
-                          'Experience',
-                          cleanerInfo['experience'] ?? 'N/A',
-                        ),
-                      ]),
-                    ] else
-                      const Center(
-                        child: Text(
-                          'Cleaner details not available.',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
-                    const SizedBox(height: 24),
-                  ],
-                  if (requestData['status'] == 'accepted_pending_customer')
-                    _displayActionButtons(
-                      screenContext,
-                      approveHandler:
-                          () => _approveAssignedCleaner(screenContext),
-                      rejectHandler:
-                          () => _rejectAssignedCleaner(screenContext),
-                    ),
-                  if (requestData['status'] == 'accepted')
-                    _displayActionButtons(
-                      screenContext,
-                      completeHandler:
-                          () => _setRequestAsCompleted(screenContext),
-                      cancelHandler:
-                          () => _cancelCleaningRequest(screenContext),
-                    ),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  //
-  //
-  Widget _displaySectionTitle(String sectionTitle) {
-    return Center(
-      // Centers the text
-      child: Text(
-        sectionTitle,
-        style: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Color.fromARGB(255, 99, 100, 103),
-          shadows: [
-            Shadow(
-              blurRadius: 10.0, // Creates a shadow effect
-              color: Colors.black26, // Color and opacity of shadow
-              offset: Offset(2, 2), // Position of the shadow
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  //
-  //
-  Widget _displayHouseImages(List<dynamic> houseImages) {
-    if (houseImages.isEmpty) {
-      return const Center(
-        child: Text(
-          'No images available.',
-          style: TextStyle(color: Colors.grey),
-        ),
-      );
-    }
-
-    return SizedBox(
-      height: 120,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: houseImages.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: Center(
-              // Centering the images
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  decoration: BoxDecoration(
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26, // Shadow color
-                        blurRadius: 10, // Blur radius for the shadow
-                        offset: Offset(3, 3), // Position of the shadow
-                      ),
-                    ],
-                  ),
-                  child: Image.network(
-                    houseImages[index],
-                    width: 120,
-                    height: 120,
-                    fit: BoxFit.cover,
-                    errorBuilder:
-                        (_, __, ___) => const Icon(
-                          Icons.error,
-                          size: 50,
-                          color: Colors.grey,
-                        ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  //
-  Widget _displayDetailsContainer(List<Widget> detailRows) {
-    return Center(
-      // Center the card on the screen
-      child: Card(
-        elevation: 8, // Increased elevation for a more noticeable shadow
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+      appBar: AppBar(title: const Text('Request Details')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: detailRows,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _displayInfoRow(
-    String infoLabel,
-    String infoValue, {
-    Color? textColor,
-    bool isBold = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Center(
-        // Center the content horizontally
-        child: RichText(
-          text: TextSpan(
             children: [
-              TextSpan(
-                text: '$infoLabel: ',
+              const Text(
+                'Request Details',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Text('Name: ${request['name'] ?? 'N/A'}'),
+              Text('Address: ${request['address'] ?? 'N/A'}'),
+              Text('Rooms: ${request['rooms'] ?? 'N/A'}'),
+              Text('Bathrooms: ${request['bathrooms'] ?? 'N/A'}'),
+              Text('Living Rooms: ${request['living_rooms'] ?? 'N/A'}'),
+              Text('Flooring Type: ${request['flooring_type'] ?? 'N/A'}'),
+              Text('Service Date: ${request['date'] ?? 'N/A'}'),
+              Text('Status: $displayStatus'),
+              Text(
+                'Price: \$${request['price']?.toStringAsFixed(2) ?? 'N/A'}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF4B5563),
-                  fontSize: 16,
-                  shadows: [
-                    // Add shadow for 3D effect
-                    Shadow(
-                      blurRadius: 3.0,
-                      color: Colors.black12,
-
-                      offset: Offset(2, 2),
+                  color: Colors.pink,
+                ),
+              ),
+              if (request['status'] == 'accepted' &&
+                  request['cleaner_name'] != null)
+                Text(
+                  'Accepted by: ${request['cleaner_name']}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              if (request['status'] == 'completed' &&
+                  request['verification_code'] != null)
+                Text(
+                  'Verification Code: ${request['verification_code']}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              if (request['cancellation_reason'] != null)
+                Text(
+                  'Cancellation Reason: ${request['cancellation_reason']}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              const SizedBox(height: 16),
+              if (request['status'] == 'accepted_pending_customer' ||
+                  request['status'] == 'accepted' ||
+                  request['status'] == 'completed') ...[
+                const Text(
+                  'Cleaner Details',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                if (cleanerDetails != null) ...[
+                  Text('Full Name: ${cleanerDetails['fullName'] ?? 'N/A'}'),
+                  Text('Age: ${cleanerDetails['age'] ?? 'N/A'}'),
+                  Text('Gender: ${cleanerDetails['gender'] ?? 'N/A'}'),
+                  Text('Email: ${cleanerDetails['email'] ?? 'N/A'}'),
+                  Text(
+                    'Phone Number: ${cleanerDetails['phoneNumber'] ?? 'N/A'}',
+                  ),
+                  Text('Experience: ${cleanerDetails['experience'] ?? 'N/A'}'),
+                  const SizedBox(height: 8),
+                  cleanerDetails['profileImageUrl'] != null
+                      ? Image.network(
+                        cleanerDetails['profileImageUrl'],
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                      )
+                      : const Text('No profile picture available.'),
+                ] else
+                  const Text('Cleaner details not available.'),
+              ],
+              const SizedBox(height: 16),
+              const Text(
+                'House Images',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              request['images'] != null &&
+                      (request['images'] as List).isNotEmpty
+                  ? SizedBox(
+                    height: 120,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: (request['images'] as List).length,
+                      itemBuilder:
+                          (context, index) => Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: Image.network(
+                              request['images'][index],
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, __, ___) =>
+                                      const Text('Error loading image'),
+                            ),
+                          ),
+                    ),
+                  )
+                  : const Text('No images available.'),
+              const SizedBox(height: 20),
+              if (request['status'] == 'accepted_pending_customer')
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => _approveCleaner(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+                      child: const Text('Accept Cleaner'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => _rejectCleaner(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
+                      child: const Text('Reject Cleaner'),
                     ),
                   ],
                 ),
-              ),
-              TextSpan(
-                text: infoValue,
-                style: TextStyle(
-                  color: textColor ?? const Color(0xFF6B7280),
-                  fontSize: 16,
-                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-                  shadows: [
-                    // Add shadow for 3D effect
-                    Shadow(
-                      blurRadius: 3.0,
-                      color: Colors.grey.withOpacity(0.5),
-                      offset: Offset(2, 2),
+              if (request['status'] == 'accepted')
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => _markAsCompleted(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+                      child: const Text('Complete'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => _cancelRequest(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
+                      child: const Text('Cancel'),
                     ),
                   ],
                 ),
-              ),
             ],
           ),
         ),
       ),
     );
   }
-
-  Widget _displayActionButtons(
-    BuildContext screenContext, {
-    VoidCallback? approveHandler,
-    VoidCallback? rejectHandler,
-    VoidCallback? completeHandler,
-    VoidCallback? cancelHandler,
-  }) {
-    final deviceWidth = MediaQuery.of(screenContext).size.width;
-    final isSmallDevice = deviceWidth < 600;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20.10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (approveHandler != null)
-            _buildCustomButton(
-              screenContext,
-              'Accept',
-              approveHandler,
-              const Color.fromARGB(255, 76, 152, 175),
-              isSmallDevice ? 120 : 150,
-            ),
-          if (rejectHandler != null)
-            _buildCustomButton(
-              screenContext,
-              'Reject',
-              rejectHandler,
-              const Color.fromARGB(255, 180, 86, 79),
-              isSmallDevice ? 120 : 150,
-            ),
-          if (completeHandler != null)
-            _buildCustomButton(
-              screenContext,
-              'Complete',
-              completeHandler,
-              const Color.fromARGB(255, 76, 162, 175),
-              isSmallDevice ? 120 : 150,
-            ),
-          if (cancelHandler != null) ...[
-            const SizedBox(width: 20.0), // Add a gap between buttons
-            _buildCustomButton(
-              screenContext,
-              'Cancel',
-              cancelHandler,
-              const Color.fromARGB(255, 190, 87, 80),
-              isSmallDevice ? 120 : 150,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCustomButton(
-    BuildContext buttonContext,
-    String buttonLabel,
-    VoidCallback buttonAction,
-    Color buttonColor,
-    double buttonWidth,
-  ) {
-    return SizedBox(
-      width: buttonWidth, // Fixed width for consistent sizing
-      child: ElevatedButton(
-        onPressed: buttonAction,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: buttonColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          elevation: 4, // Add shadow for a raised effect
-        ),
-        child: Text(
-          buttonLabel,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
-class CancellationReasonDialog extends StatefulWidget {
-  final Function(String) onConfirmCancellation;
+class CancelReasonDialog extends StatefulWidget {
+  final Function(String) onConfirm;
 
-  const CancellationReasonDialog({
-    super.key,
-    required this.onConfirmCancellation,
-  });
+  const CancelReasonDialog({super.key, required this.onConfirm});
 
   @override
-  _CancellationReasonDialogState createState() =>
-      _CancellationReasonDialogState();
+  _CancelReasonDialogState createState() => _CancelReasonDialogState();
 }
 
-class _CancellationReasonDialogState extends State<CancellationReasonDialog> {
-  final TextEditingController cancellationReasonController =
-      TextEditingController();
+class _CancelReasonDialogState extends State<CancelReasonDialog> {
+  final TextEditingController _reasonController = TextEditingController();
 
   @override
-  Widget build(BuildContext dialogContext) {
+  Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Cancel Request'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Please provide a reason for cancellation:'),
-          const SizedBox(height: 12),
           TextField(
-            controller: cancellationReasonController,
-            decoration: InputDecoration(
-              hintText: 'Enter reason',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
+            controller: _reasonController,
+            decoration: const InputDecoration(hintText: 'Enter reason'),
             maxLines: 3,
           ),
         ],
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(dialogContext),
+          onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        ElevatedButton(
+        TextButton(
           onPressed: () {
-            if (cancellationReasonController.text.isNotEmpty) {
-              widget.onConfirmCancellation(cancellationReasonController.text);
+            if (_reasonController.text.isNotEmpty) {
+              widget.onConfirm(_reasonController.text);
             } else {
-              ScaffoldMessenger.of(dialogContext).showSnackBar(
-                const SnackBar(
-                  content: Text('Please provide a reason'),
-                  backgroundColor: Colors.red,
-                  duration: Duration(seconds: 2),
-                ),
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Please provide a reason')),
               );
             }
           },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white,
-          ),
           child: const Text('Confirm'),
         ),
       ],
@@ -1286,7 +905,7 @@ class _CancellationReasonDialogState extends State<CancellationReasonDialog> {
 
   @override
   void dispose() {
-    cancellationReasonController.dispose();
+    _reasonController.dispose();
     super.dispose();
   }
 }
@@ -1418,6 +1037,7 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
       setState(() => _isUploading = true);
       _isLoading = true; // Show loading indicator
       try {
+        await Future.delayed(Duration(seconds: 2));
         final user = _auth.currentUser;
         if (user == null) throw Exception('User not logged in');
         final imageUrls = await _uploadImages();
@@ -1473,19 +1093,6 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        elevation: 12, // Enhanced elevation for stronger 3D feel
-        shadowColor: const Color.fromARGB(
-          255,
-          176,
-          176,
-          178,
-        ).withOpacity(0.4), // Softer shadow for depth
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(22),
-          ), // Slightly smoother curve
-        ),
         title: const Text(
           'Service Request',
           style: TextStyle(
@@ -1494,7 +1101,8 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
             fontSize: 24,
           ),
         ),
-
+        backgroundColor: Colors.white,
+        elevation: 1,
         centerTitle: true,
       ),
       body:
@@ -1765,25 +1373,64 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
     bool isRequired = true,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Color.fromARGB(137, 55, 54, 54)),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(
-              color: Color.fromARGB(255, 98, 99, 100),
-              width: 2,
+      padding: const EdgeInsets.only(bottom: 20.0),
+      child: SizedBox(
+        width: 300, // Enforce a specific width for the TextField
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: const Color.fromARGB(255, 84, 82, 82).withOpacity(0.15),
+                blurRadius: 2,
+                spreadRadius: 2,
+                offset: const Offset(1, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            decoration: InputDecoration(
+              labelText: label,
+              labelStyle: const TextStyle(
+                color: Colors.black54,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Color.fromARGB(255, 157, 187, 106),
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.red, width: 1),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.red, width: 2),
+              ),
             ),
+            readOnly: readOnly,
+            maxLines: maxLines,
+            onTap: onTap,
+            validator: isRequired ? validator : null,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
           ),
         ),
-        readOnly: readOnly,
-        maxLines: maxLines,
-        onTap: onTap,
-        validator: isRequired ? validator : null,
       ),
     );
   }
@@ -1796,32 +1443,78 @@ class _CleaningFormPageState extends State<CleaningFormPage> {
     String? Function(T?)? validator,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: DropdownButtonFormField<T>(
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Colors.black54),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          focusedBorder: OutlineInputBorder(
+      padding: const EdgeInsets.only(bottom: 20.0),
+      child: SizedBox(
+        width: 300, // Enforce a specific width for the DropdownField
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(
-              color: Color.fromARGB(255, 88, 89, 90),
-              width: 2,
+            boxShadow: [
+              BoxShadow(
+                color: const Color.fromARGB(255, 84, 82, 82).withOpacity(0.15),
+                blurRadius: 2,
+                spreadRadius: 2,
+                offset: const Offset(1, 2),
+              ),
+            ],
+          ),
+          child: DropdownButtonFormField<T>(
+            decoration: InputDecoration(
+              labelText: label,
+              labelStyle: const TextStyle(
+                color: Colors.black54,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Color.fromARGB(255, 60, 204, 91),
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.red, width: 1),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.red, width: 2),
+              ),
             ),
+            value: value,
+            items:
+                items
+                    .map(
+                      (T item) => DropdownMenuItem<T>(
+                        value: item,
+                        child: Text(
+                          item.toString(),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+            onChanged: onChanged,
+            validator: validator,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+            icon: const Icon(Icons.arrow_drop_down, color: Colors.blue),
           ),
         ),
-        value: value,
-        items:
-            items
-                .map(
-                  (T item) => DropdownMenuItem<T>(
-                    value: item,
-                    child: Text(item.toString()),
-                  ),
-                )
-                .toList(),
-        onChanged: onChanged,
-        validator: validator,
       ),
     );
   }
@@ -2029,15 +1722,6 @@ class _RatingAndReportWidgetState extends State<RatingAndReportWidget> {
   }
 }
 
-class CreditsPage extends StatelessWidget {
-  const CreditsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const RatingAndReportWidget(userType: 'customer');
-  }
-}
-
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -2068,15 +1752,11 @@ class _ProfilePageState extends State<ProfilePage>
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
       if (userDoc.exists) {
         final data = userDoc.data();
-        if (mounted) {
-          // Check if the widget is still mounted before calling setState
-          setState(() {
-            _fullName =
-                data?['name'] ?? 'Unknown'; // Changed from 'fullName' to 'name'
-            _email = data?['email'] ?? 'No Email';
-            _profileImageUrl = data?['profileImageUrl'];
-          });
-        }
+        setState(() {
+          _fullName = data?['fullName'] ?? 'Unknown';
+          _email = data?['email'] ?? 'No Email';
+          _profileImageUrl = data?['profileImageUrl'];
+        });
       }
     }
   }
@@ -2182,34 +1862,51 @@ class _ProfilePageState extends State<ProfilePage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 12, // Enhanced elevation for stronger 3D feel
-        shadowColor: const Color.fromARGB(
-          255,
-          176,
-          176,
-          178,
-        ).withOpacity(0.4), // Softer shadow for depth
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(22),
-          ), // Slightly smoother curve
-        ),
-        title: const Text(
-          'Profile',
-          style: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-            color: Color.fromARGB(255, 81, 82, 84),
-          ),
+        title: Stack(
+          alignment: Alignment.center,
+          children: [
+            Text(
+              'Cleanzy',
+              style: GoogleFonts.greatVibes(
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent,
+              ).copyWith(fontFamilyFallback: ['Roboto']),
+            ),
+            ...List.generate(
+              5,
+              (index) => Positioned(
+                left: 10.0 * (index - 2) + (index.isEven ? -20 : 20),
+                top: 10.0 * (index % 3) - 10,
+                child: AnimatedBuilder(
+                  animation: _glitterController,
+                  builder: (context, child) {
+                    return FadeTransition(
+                      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+                        CurvedAnimation(
+                          parent: _glitterController,
+                          curve: Interval(
+                            index * 0.2,
+                            (index + 1) * 0.2,
+                            curve: Curves.easeInOut,
+                          ),
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.star,
+                        size: 12.0,
+                        color: Colors.yellow.withOpacity(0.7),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(
-              Icons.exit_to_app,
-              color: Color.fromARGB(255, 87, 89, 90),
-              size: 30,
-            ),
+            icon: const Icon(Icons.exit_to_app, color: Colors.blue, size: 30),
             onPressed: () => _logout(context),
             tooltip: 'Logout',
           ),
@@ -2219,60 +1916,32 @@ class _ProfilePageState extends State<ProfilePage>
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.center, // Centering the content
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Centering the CircleAvatar and adding 3D effect
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                // Applying a 3D effect using a BoxShadow
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 12.0, // Increased blur for better 3D effect
-                        offset: Offset(5, 5), // Shadow position
-                      ),
-                    ],
+            Center(
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundImage:
+                        _profileImageUrl != null
+                            ? NetworkImage(_profileImageUrl!)
+                            : const AssetImage('assets/default_profile.png')
+                                as ImageProvider,
                   ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color.fromARGB(
-                          255,
-                          78,
-                          79,
-                          80,
-                        ), // Change the color of the border here
-                        width: 4.0, // Adjust the border width as needed
-                      ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 60,
-                      backgroundImage:
-                          _profileImageUrl != null
-                              ? NetworkImage(_profileImageUrl!)
-                              : const AssetImage('assets/default_profile.png')
-                                  as ImageProvider,
+                  Positioned(
+                    bottom: 0, // Changed from custombottom to bottom
+                    right: 0,
+                    child: IconButton(
+                      icon: const Icon(Icons.camera_alt, size: 30),
+                      onPressed: _uploadImage,
                     ),
                   ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: IconButton(
-                    icon: const Icon(Icons.camera_alt, size: 30),
-                    onPressed: _uploadImage,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 24),
-            _buildProfileField('Name', _fullName ?? 'Loading...'),
+            _buildProfileField('Full Name', _fullName ?? 'Loading...'),
             _buildProfileField('Email', _email ?? 'Loading...'),
           ],
         ),

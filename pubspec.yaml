@@ -52,6 +52,7 @@ dependencies:
   google_fonts: ^6.0.0
   flutter_spinkit: ^5.2.1
   flutter_svg: ^2.0.17
+  flutter_arc_text: ^0.6.0
 
 dev_dependencies:
 
@@ -96,6 +97,7 @@ flutter:
      - assets/splash.png
      - assets/logo.png
      - assets/google_logo.png
+     - assets/cleaning.json
 
   # fonts:
   #   - family: Poppins

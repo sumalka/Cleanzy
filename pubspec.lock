@@ -278,6 +278,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_arc_text:
+    dependency: "direct main"
+    description:
+      name: flutter_arc_text
+      sha256: "1140498cde517ece13f79df90544f10ec3291821b084edde2b0d9ba27f3f060e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.0"
   flutter_launcher_icons:
     dependency: "direct dev"
     description:
