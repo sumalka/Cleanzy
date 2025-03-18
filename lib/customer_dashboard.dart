@@ -341,197 +341,205 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.all(16.0),
       child: Stack(
         children: [
-          SingleChildScrollView(
-            // ✅ Enables full-page scrolling
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 12), // Placeholder for FAB height
-                Padding(
-                  padding: const EdgeInsets.only(left: 13),
-                  child: const Text(
-                    'My Requests',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 75, 75, 75),
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: 300,
+            ), // Set minimum height here
+            child: SingleChildScrollView(
+              // ✅ Enables full-page scrolling
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12), // Placeholder for FAB height
+                  Padding(
+                    padding: const EdgeInsets.only(left: 13),
+                    child: const Text(
+                      'My Requests',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 75, 75, 75),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                StreamBuilder<QuerySnapshot>(
-                  stream: getCleaningRequests(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return const Center(
-                        child: Text('Error loading requests.'),
-                      );
-                    }
-                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return const Center(
-                        child: Text('No cleaning requests yet.'),
-                      );
-                    }
+                  StreamBuilder<QuerySnapshot>(
+                    stream: getCleaningRequests(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return const Center(
+                          child: Text('Error loading requests.'),
+                        );
+                      }
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return const Center(
+                          child: Text('No cleaning requests yet.'),
+                        );
+                      }
 
-                    return ListView.builder(
-                      shrinkWrap: true, // ✅ Makes it fit inside Column
-                      physics:
-                          const NeverScrollableScrollPhysics(), // ✅ Prevents nested scrolling issues
-                      itemCount: snapshot.data!.docs.length,
-                      itemBuilder: (context, index) {
-                        var request =
-                            snapshot.data!.docs[index].data()
-                                as Map<String, dynamic>;
-                        var docId = snapshot.data!.docs[index].id;
-                        String displayStatus =
-                            request['status'] == 'accepted_pending_customer'
-                                ? 'Awaiting Your Approval'
-                                : request['status'] ?? 'Pending';
+                      return ListView.builder(
+                        shrinkWrap: true, // ✅ Makes it fit inside Column
+                        physics:
+                            const NeverScrollableScrollPhysics(), // ✅ Prevents nested scrolling issues
+                        itemCount: snapshot.data!.docs.length,
+                        itemBuilder: (context, index) {
+                          var request =
+                              snapshot.data!.docs[index].data()
+                                  as Map<String, dynamic>;
+                          var docId = snapshot.data!.docs[index].id;
+                          String displayStatus =
+                              request['status'] == 'accepted_pending_customer'
+                                  ? 'Awaiting Your Approval'
+                                  : request['status'] ?? 'Pending';
 
-                        return SizedBox(
-                          height: 130,
-                          child: Card(
-                            margin: const EdgeInsets.symmetric(vertical: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 4,
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(8.0),
-                              leading:
-                                  request['images'] != null &&
-                                          (request['images'] as List).isNotEmpty
-                                      ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(6),
-                                        child: Image.network(
-                                          request['images'][0],
-                                          width: 60,
-                                          height: 80,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) =>
-                                                  const Icon(
-                                                    Icons.broken_image,
-                                                    size: 40,
-                                                    color: Colors.grey,
-                                                  ),
-                                        ),
-                                      )
-                                      : const Icon(
-                                        Icons.image_not_supported,
-                                        size: 40,
-                                        color: Colors.grey,
-                                      ),
-                              title: Text(
-                                'Request from you',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[600],
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                          return SizedBox(
+                            height: 130,
+                            child: Card(
+                              margin: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Date: ${request['date'] ?? 'N/A'}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
+                              elevation: 4,
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(8.0),
+                                leading:
+                                    request['images'] != null &&
+                                            (request['images'] as List)
+                                                .isNotEmpty
+                                        ? ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                          child: Image.network(
+                                            request['images'][0],
+                                            width: 60,
+                                            height: 80,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    const Icon(
+                                                      Icons.broken_image,
+                                                      size: 40,
+                                                      color: Colors.grey,
+                                                    ),
+                                          ),
+                                        )
+                                        : const Icon(
+                                          Icons.image_not_supported,
+                                          size: 40,
+                                          color: Colors.grey,
+                                        ),
+                                title: Text(
+                                  'Request from you',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[600],
                                   ),
-                                  if (request['status'] == 'accepted')
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
                                     Text(
-                                      'Cleaner: ${request['cleaner_name'] ?? 'Unknown'}',
+                                      'Date: ${request['date'] ?? 'N/A'}',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey[600],
                                       ),
                                     ),
-                                  if (request['cancellation_reason'] != null)
-                                    Text(
-                                      'Cancelled: ${request['cancellation_reason']}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.red,
-                                      ),
-                                    ),
-                                  if (request['status'] == 'completed' &&
-                                      request['verification_code'] != null)
-                                    Text(
-                                      'Code: ${request['verification_code']}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.green,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  Text(
-                                    'Price: \$${request['price']?.toStringAsFixed(2) ?? 'N/A'}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.pink[700],
-                                    ),
-                                  ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
+                                    if (request['status'] == 'accepted')
                                       Text(
-                                        displayStatus,
+                                        'Cleaner: ${request['cleaner_name'] ?? 'Unknown'}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    if (request['cancellation_reason'] != null)
+                                      Text(
+                                        'Cancelled: ${request['cancellation_reason']}',
                                         style: const TextStyle(
                                           fontSize: 12,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    if (request['status'] == 'completed' &&
+                                        request['verification_code'] != null)
+                                      Text(
+                                        'Code: ${request['verification_code']}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.green,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      if (request['status'] == 'pending')
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.delete,
-                                            color: Colors.red,
-                                            size: 20,
-                                          ),
-                                          onPressed:
-                                              () => _deleteRequest(
-                                                context,
-                                                docId,
-                                              ),
-                                          padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(),
-                                        ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              onTap:
-                                  () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => RequestDetailsScreen(
-                                            requestDocumentId: docId,
-                                            requestData: request,
-                                          ),
+                                    Text(
+                                      'Price: \$${request['price']?.toStringAsFixed(2) ?? 'N/A'}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.pink[700],
+                                      ),
                                     ),
-                                  ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          displayStatus,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        if (request['status'] == 'pending')
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.delete,
+                                              color: Colors.red,
+                                              size: 20,
+                                            ),
+                                            onPressed:
+                                                () => _deleteRequest(
+                                                  context,
+                                                  docId,
+                                                ),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                onTap:
+                                    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => RequestDetailsScreen(
+                                              requestDocumentId: docId,
+                                              requestData: request,
+                                            ),
+                                      ),
+                                    ),
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
           Positioned(
-            bottom: 16,
+            bottom: 15,
             right: 1,
             child: _buildCategory(context, 'Cleaning', 'assets/cleaning.json'),
           ),

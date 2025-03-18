@@ -423,7 +423,10 @@ Widget _buildRequestsList() {
               trailing:
                   requestData['status'] == 'Completed'
                       ? const Icon(Icons.check_circle, color: Colors.green)
-                      : const Icon(Icons.pending, color: Colors.orange),
+                      : const Icon(
+                        Icons.pending,
+                        color: Color.fromARGB(255, 255, 255, 255),
+                      ),
             ),
           );
         },
