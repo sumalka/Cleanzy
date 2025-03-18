@@ -53,6 +53,7 @@ dependencies:
   flutter_spinkit: ^5.2.1
   flutter_svg: ^2.0.17
   flutter_arc_text: ^0.6.0
+  logger: ^2.0.2+1
 
 dev_dependencies:
 

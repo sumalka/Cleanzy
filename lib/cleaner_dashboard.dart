@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use, duplicate_ignore
-
 import 'package:cleaning_app/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -44,7 +42,7 @@ class _CleanerDashboardState extends State<CleanerDashboard>
   String? _profileImageUrl;
   late AnimationController _glitterController;
 
-  final List<Widget> _pages = [const HomePage(), const CreditsPage()];
+  final List<Widget> _pages = [const HomePage(), const RatingsPage()];
 
   @override
   void initState() {
@@ -95,40 +93,6 @@ class _CleanerDashboardState extends State<CleanerDashboard>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white, // Base color for light theme
-        elevation: 15, // Increased for stronger 3D effect
-        shadowColor: const Color.fromARGB(
-          255,
-          136,
-          133,
-          133,
-          // ignore: deprecated_member_use
-        ).withOpacity(0.1), // Slightly darker shadow for depth
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.white, // Top (light source simulation)
-                Colors.grey.shade100, // Bottom (subtle depth)
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color.fromARGB(
-                  255,
-                  172,
-                  170,
-                  170,
-                ).withOpacity(0.1),
-                blurRadius: 5,
-                spreadRadius: 2,
-                offset: const Offset(0, 4), // Offset for 3D "lifted" effect
-              ),
-            ],
-          ),
-        ),
         title: Stack(
           alignment: Alignment.center,
           children: [
@@ -137,7 +101,7 @@ class _CleanerDashboardState extends State<CleanerDashboard>
               style: GoogleFonts.greatVibes(
                 fontSize: 36,
                 fontWeight: FontWeight.bold,
-                color: Colors.blueAccent,
+                color: const Color.fromARGB(255, 227, 18, 91),
               ).copyWith(fontFamilyFallback: ['Roboto']),
             ),
             ...List.generate(
@@ -173,45 +137,19 @@ class _CleanerDashboardState extends State<CleanerDashboard>
         ),
         actions: [
           IconButton(
-            icon: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: const Color.fromARGB(
-                    255,
-                    108,
-                    110,
-                    108,
-                  ), // Green border to match your theme
-                  width: 2.0, // Border thickness
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color.fromARGB(
-                      255,
-                      255,
-                      255,
-                      255,
-                    ).withAlpha((0.5 * 255).toInt()),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: CircleAvatar(
-                radius: 25,
-                backgroundImage:
-                    _profileImageUrl != null
-                        ? NetworkImage(_profileImageUrl!)
-                        : const AssetImage('assets/default_profile.png')
-                            as ImageProvider,
-                backgroundColor: Colors.grey[300],
-              ),
+            icon: CircleAvatar(
+              radius: 15,
+              backgroundImage:
+                  _profileImageUrl != null
+                      ? NetworkImage(_profileImageUrl!)
+                      : const AssetImage('assets/default_profile.png')
+                          as ImageProvider,
+              backgroundColor: Colors.grey[300],
             ),
             onPressed: () => _navigateToProfile(context),
             tooltip: 'Profile',
           ),
-          const SizedBox(width: 10), // Assuming you want to keep this spacing
+          const SizedBox(width: 10),
         ],
       ),
       body: _pages[_currentIndex],
@@ -238,14 +176,14 @@ class ReusableBottomNavBar extends StatelessWidget {
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
-      selectedItemColor: const Color.fromARGB(255, 45, 142, 105),
+      selectedItemColor: Colors.grey[600],
       unselectedItemColor: Colors.grey,
       showUnselectedLabels: true,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(
           icon: Icon(Icons.calendar_today),
-          label: 'Bookings',
+          label: 'Ratings',
         ),
       ],
     );
@@ -312,12 +250,12 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Pending Cleaning Requests',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.blue,
+              color: Colors.grey[600],
             ),
           ),
           const SizedBox(height: 16),
@@ -950,7 +888,7 @@ class RequestDetailsPage extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
     String displayStatus =
         request['status'] == 'completed'
-            ? 'Customer Completed'
+            ? 'completed'
             : request['status'] ?? 'Pending';
     bool isPreviouslyAssigned =
         user != null &&
@@ -963,14 +901,14 @@ class RequestDetailsPage extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Text(
-                'Customer Info',
+                'House Details',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue,
+                  color: Colors.grey,
                 ),
               ),
               const SizedBox(height: 12),
@@ -980,109 +918,117 @@ class RequestDetailsPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      _buildInfoRow(
-                        'Name',
-                        request['name']?.toString() ?? 'N/A',
-                      ),
-                      _buildInfoRow(
-                        'Address',
-                        request['address']?.toString() ?? 'N/A',
-                      ),
-                      _buildInfoRow(
-                        'Rooms',
-                        request['rooms']?.toString() ?? 'N/A',
-                      ),
-                      _buildInfoRow(
-                        'Bathrooms',
-                        request['bathrooms']?.toString() ?? 'N/A',
-                      ),
-                      _buildInfoRow(
-                        'Living Rooms',
-                        request['living_rooms']?.toString() ?? 'N/A',
-                      ),
-                      _buildInfoRow(
-                        'Flooring Type',
-                        request['flooring_type']?.toString() ?? 'N/A',
-                      ),
-                      _buildInfoRow(
-                        'Service Date',
-                        request['date']?.toString() ?? 'N/A',
-                      ),
-                      _buildInfoRow('Status', displayStatus),
-                      _buildInfoRow(
-                        'Price',
-                        '\$${request['price']?.toStringAsFixed(2) ?? 'N/A'}',
-                        valueStyle: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.pink[700],
+                      // Single house image or placeholder
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(8),
                         ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child:
+                              request['images'] != null &&
+                                      (request['images'] as List).isNotEmpty
+                                  ? Image.network(
+                                    request['images'][0],
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (_, __, ___) => const Icon(
+                                          Icons.broken_image,
+                                          color: Colors.grey,
+                                          size: 50,
+                                        ),
+                                  )
+                                  : const Icon(
+                                    Icons.image_not_supported,
+                                    color: Colors.grey,
+                                    size: 50,
+                                  ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Centered details in a single column
+                      Text(
+                        'Name: ${request['name']?.toString() ?? 'N/A'}',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        'Address: ${request['address']?.toString() ?? 'N/A'}',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        'Rooms: ${request['rooms']?.toString() ?? 'N/A'}',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        'Bathrooms: ${request['bathrooms']?.toString() ?? 'N/A'}',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        'Living Rooms: ${request['living_rooms']?.toString() ?? 'N/A'}',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        'Flooring Type: ${request['flooring_type']?.toString() ?? 'N/A'}',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        'Service Date: ${request['date']?.toString() ?? 'N/A'}',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        'Status: $displayStatus',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        'Price: \$${request['price']?.toStringAsFixed(2) ?? 'N/A'}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.pink[700],
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                       if (request['status'] == 'completed' &&
                           request['verification_code'] != null)
-                        _buildInfoRow(
-                          'Verification Code',
-                          request['verification_code']?.toString() ?? 'N/A',
-                          valueStyle: const TextStyle(
-                            fontWeight: FontWeight.bold,
+                        Text(
+                          'Verification Code: ${request['verification_code']?.toString() ?? 'N/A'}',
+                          style: const TextStyle(
+                            fontSize: 16,
                             color: Colors.green,
+                            fontWeight: FontWeight.bold,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       if (request['cancellation_reason'] != null)
-                        _buildInfoRow(
-                          'Cancellation Reason',
-                          request['cancellation_reason']?.toString() ?? 'N/A',
-                          valueStyle: const TextStyle(color: Colors.red),
+                        Text(
+                          'Cancellation Reason: ${request['cancellation_reason']?.toString() ?? 'N/A'}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.red,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              const Text(
-                'House Images',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              request['images'] != null &&
-                      (request['images'] as List).isNotEmpty
-                  ? SizedBox(
-                    height: 120,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: (request['images'] as List).length,
-                      itemBuilder:
-                          (context, index) => Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                request['images'][index],
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                                errorBuilder:
-                                    (_, __, ___) => Container(
-                                      width: 100,
-                                      height: 100,
-                                      color: Colors.grey[300],
-                                      child: const Icon(
-                                        Icons.broken_image,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                              ),
-                            ),
-                          ),
-                    ),
-                  )
-                  : Text(
-                    'No images available.',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1135,30 +1081,6 @@ class RequestDetailsPage extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildInfoRow(String label, String value, {TextStyle? valueStyle}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label: ',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: valueStyle ?? TextStyle(color: Colors.grey[600]),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class RatingAndReportWidget extends StatefulWidget {
@@ -1176,41 +1098,12 @@ class _RatingAndReportWidgetState extends State<RatingAndReportWidget> {
   double _rating = 0.0;
   double _averageRating = 0.0;
   int _totalReviews = 0;
-  bool _hasRated = false;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
-  }
-
-  Future<void> _loadInitialData() async {
-    try {
-      await Future.wait([_checkIfRated(), _fetchAverageRating()]);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _checkIfRated() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final ratingDoc =
-          await _firestore.collection('app_ratings').doc(user.uid).get();
-      if (ratingDoc.exists && mounted) {
-        setState(() {
-          _hasRated = true;
-          _rating = ratingDoc.data()!['rating'].toDouble();
-        });
-      }
-    }
+    _fetchAverageRating();
   }
 
   Future<void> _fetchAverageRating() async {
@@ -1223,6 +1116,13 @@ class _RatingAndReportWidgetState extends State<RatingAndReportWidget> {
       setState(() {
         _averageRating = totalRating / ratingsSnapshot.docs.length;
         _totalReviews = ratingsSnapshot.docs.length;
+        _isLoading = false;
+      });
+    } else if (mounted) {
+      setState(() {
+        _averageRating = 0.0;
+        _totalReviews = 0;
+        _isLoading = false;
       });
     }
   }
@@ -1243,16 +1143,19 @@ class _RatingAndReportWidgetState extends State<RatingAndReportWidget> {
     }
     setState(() => _isLoading = true);
     try {
-      await _firestore.collection('app_ratings').doc(user.uid).set({
+      await _firestore.collection('app_ratings').add({
         'user_id': user.uid,
         'user_type': widget.userType,
         'rating': _rating,
         'report': _reportController.text,
         'timestamp': FieldValue.serverTimestamp(),
       });
+      await _fetchAverageRating();
       if (mounted) {
-        setState(() => _hasRated = true);
-        await _fetchAverageRating();
+        setState(() {
+          _rating = 0.0; // Reset rating after submission
+          _reportController.clear(); // Clear report text
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Rating and report submitted successfully!'),
@@ -1320,29 +1223,22 @@ class _RatingAndReportWidgetState extends State<RatingAndReportWidget> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _hasRated
-                        ? Text(
-                          'You have already rated: $_rating stars',
-                          style: TextStyle(color: Colors.grey[600]),
-                        )
-                        : Row(
-                          children: List.generate(
-                            5,
-                            (index) => IconButton(
-                              icon: Icon(
-                                index < _rating
-                                    ? Icons.star
-                                    : Icons.star_border,
-                                color: Colors.yellow,
-                                size: 32,
-                              ),
-                              onPressed:
-                                  () => setState(
-                                    () => _rating = (index + 1).toDouble(),
-                                  ),
-                            ),
+                    Row(
+                      children: List.generate(
+                        5,
+                        (index) => IconButton(
+                          icon: Icon(
+                            index < _rating ? Icons.star : Icons.star_border,
+                            color: Colors.yellow,
+                            size: 32,
                           ),
+                          onPressed:
+                              () => setState(
+                                () => _rating = (index + 1).toDouble(),
+                              ),
                         ),
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     const Text(
                       'Submit a Report (Optional)',
@@ -1359,24 +1255,22 @@ class _RatingAndReportWidgetState extends State<RatingAndReportWidget> {
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 4,
-                      enabled: !_hasRated,
                     ),
                     const SizedBox(height: 16),
-                    if (!_hasRated)
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _submitRatingAndReport,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: const Text(
-                            'Submit Rating & Report',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _submitRatingAndReport,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'Submit Rating & Report',
+                          style: TextStyle(color: Colors.white),
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -1390,8 +1284,8 @@ class _RatingAndReportWidgetState extends State<RatingAndReportWidget> {
   }
 }
 
-class CreditsPage extends StatelessWidget {
-  const CreditsPage({super.key});
+class RatingsPage extends StatelessWidget {
+  const RatingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {

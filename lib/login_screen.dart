@@ -8,6 +8,7 @@ import 'cleaner_dashboard.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 import 'package:lottie/lottie.dart';
+import 'dart:developer' as developer;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -78,26 +79,43 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isLoading = true);
+
     try {
-      // Attempt to sign in with email and password
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      // Check if the user's token is still valid
       User? user = userCredential.user;
       if (user != null) {
-        // Force refresh the token to avoid expired token issues
-        await user.getIdToken(true); // This refreshes the token if expired
+        await user.getIdToken(true);
 
-        // Fetch user role from Firestore
         DocumentSnapshot userDoc =
             await _firestore.collection('users').doc(user.uid).get();
 
         if (userDoc.exists) {
-          String role = userDoc['role'];
+          developer.log(
+            'User Document Data: ${userDoc.data()}',
+            name: 'LoginScreen',
+          );
+
+          Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
+          String role = data?['role'] ?? 'Unknown';
+          bool isBlocked = data?['blocked'] ?? false;
+
+          developer.log(
+            'Role: $role, Blocked: $isBlocked',
+            name: 'LoginScreen',
+          );
+
+          if (isBlocked) {
+            _showError('Your account is blocked. Contact support for help.');
+            await _auth.signOut();
+            return;
+          }
+
           if (role == 'Admin') {
             Navigator.pushReplacement(
               context,
@@ -116,40 +134,42 @@ class _LoginScreenState extends State<LoginScreen>
               MaterialPageRoute(builder: (context) => const CleanerDashboard()),
             );
           } else {
-            _showError('Invalid role. Contact support.');
+            _showError('Account role invalid. Contact support.');
           }
         } else {
-          _showError('User not found. Please sign up.');
+          _showError('No account found. Please sign up first.');
         }
       } else {
-        _showError('Unable to authenticate user.');
+        _showError('Authentication failed. Please try again.');
       }
     } catch (e) {
-      // Enhanced error handling
       if (e is FirebaseAuthException) {
         switch (e.code) {
           case 'user-not-found':
-            _showError('No user found with that email.');
+            _showError('Email not registered. Please sign up.');
             break;
           case 'wrong-password':
-            _showError('Incorrect password.');
+            _showError('Incorrect password. Try again.');
             break;
           case 'invalid-email':
-            _showError('Invalid email format.');
+            _showError('Invalid email format. Check your email.');
+            break;
+          case 'invalid-credential':
+            _showError('Email or password incorrect. Try again.');
             break;
           case 'auth/id-token-expired':
           case 'token-expired':
-            _showError('Your session has expired. Please log in again.');
+            _showError('Session expired. Please log in again.');
             break;
           case 'user-disabled':
-            _showError('This user account has been disabled.');
+            _showError('Account disabled. Contact support.');
             break;
           default:
-            _showError('Login failed: ${e.message}');
+            _showError('Login error: ${e.message}. Try again.');
             break;
         }
       } else {
-        _showError('An unexpected error occurred: $e');
+        _showError('Something went wrong. Please try again.');
       }
     } finally {
       if (mounted) {
@@ -157,6 +177,88 @@ class _LoginScreenState extends State<LoginScreen>
       }
     }
   }
+
+  // Future<void> _login() async {
+  //   if (!_formKey.currentState!.validate()) return;
+  //   setState(() => _isLoading = true);
+  //   try {
+  //     // Attempt to sign in with email and password
+  //     UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+  //       email: _emailController.text.trim(),
+  //       password: _passwordController.text.trim(),
+  //     );
+
+  //     // Check if the user's token is still valid
+  //     User? user = userCredential.user;
+  //     if (user != null) {
+  //       // Force refresh the token to avoid expired token issues
+  //       await user.getIdToken(true); // This refreshes the token if expired
+
+  //       // Fetch user role from Firestore
+  //       DocumentSnapshot userDoc =
+  //           await _firestore.collection('users').doc(user.uid).get();
+
+  //       if (userDoc.exists) {
+  //         String role = userDoc['role'];
+  //         if (role == 'Admin') {
+  //           Navigator.pushReplacement(
+  //             context,
+  //             MaterialPageRoute(builder: (context) => const AdminDashboard()),
+  //           );
+  //         } else if (role == 'Customer') {
+  //           Navigator.pushReplacement(
+  //             context,
+  //             MaterialPageRoute(
+  //               builder: (context) => const CustomerDashboard(),
+  //             ),
+  //           );
+  //         } else if (role == 'Cleaner') {
+  //           Navigator.pushReplacement(
+  //             context,
+  //             MaterialPageRoute(builder: (context) => const CleanerDashboard()),
+  //           );
+  //         } else {
+  //           _showError('Invalid role. Contact support.');
+  //         }
+  //       } else {
+  //         _showError('User not found. Please sign up.');
+  //       }
+  //     } else {
+  //       _showError('Unable to authenticate user.');
+  //     }
+  //   } catch (e) {
+  //     // Enhanced error handling
+  //     if (e is FirebaseAuthException) {
+  //       switch (e.code) {
+  //         case 'user-not-found':
+  //           _showError('No user found with that email.');
+  //           break;
+  //         case 'wrong-password':
+  //           _showError('Incorrect password.');
+  //           break;
+  //         case 'invalid-email':
+  //           _showError('Invalid email format.');
+  //           break;
+  //         case 'auth/id-token-expired':
+  //         case 'token-expired':
+  //           _showError('Your session has expired. Please log in again.');
+  //           break;
+  //         case 'user-disabled':
+  //           _showError('This user account has been disabled.');
+  //           break;
+  //         default:
+  //           _showError('Login failed: ${e.message}');
+  //           break;
+  //       }
+  //     } else {
+  //       _showError('An unexpected error occurred: $e');
+  //     }
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() => _isLoading = false);
+  //     }
+  //   }
+  // }
 
   Future<void> _signInWithGoogle() async {
     try {
