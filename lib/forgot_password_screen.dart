@@ -104,10 +104,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     // Main animation
                     Lottie.asset(
                       'assets/forgot_password.json',
-                      height: 250,
+                      width: 450,
                       repeat: true,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 0),
                     Container(
                       padding: const EdgeInsets.all(25),
                       decoration: BoxDecoration(

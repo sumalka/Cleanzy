@@ -47,7 +47,7 @@ class _CustomerDashboardState extends State<CustomerDashboard>
   String? _email;
   late AnimationController _glitterController;
 
-  final List<Widget> _pages = [const HomePage(), const CreditsPage()];
+  final List<Widget> _pages = [const HomePage()];
 
   @override
   void initState() {
@@ -127,7 +127,7 @@ class _CustomerDashboardState extends State<CustomerDashboard>
                 style: GoogleFonts.pacifico(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: const Color.fromARGB(255, 120, 120, 120),
+                  color: const Color.fromARGB(255, 227, 18, 91),
                   shadows: [
                     Shadow(
                       blurRadius: 6.0, // More blur for a deeper effect
@@ -902,21 +902,26 @@ class RequestDetailsScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     if (cleanerInfo != null) ...[
                       if (cleanerInfo['profileImageUrl'] != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              cleanerInfo['profileImageUrl'],
-                              width: isSmallDevice ? 100 : 120,
-                              height: isSmallDevice ? 100 : 120,
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (_, __, ___) => const Icon(
-                                    Icons.error,
-                                    size: 50,
-                                    color: Colors.grey,
-                                  ),
+                        Center(
+                          // Added Center widget to center the image
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12.0,
+                            ), // Adjusted padding for symmetry
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                cleanerInfo['profileImageUrl'],
+                                width: isSmallDevice ? 100 : 120,
+                                height: isSmallDevice ? 100 : 120,
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (_, __, ___) => const Icon(
+                                      Icons.error,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
+                              ),
                             ),
                           ),
                         ),
@@ -1015,23 +1020,25 @@ class RequestDetailsScreen extends StatelessWidget {
 
     return SizedBox(
       height: 120,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: houseImages.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: Center(
-              // Centering the images
+      child: Center(
+        // Added Center widget to center the ListView horizontally
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: houseImages.length,
+          shrinkWrap:
+              true, // Ensures the ListView takes only the space it needs
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(right: 12.0),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
                   decoration: BoxDecoration(
                     boxShadow: const [
                       BoxShadow(
-                        color: Colors.black26, // Shadow color
-                        blurRadius: 10, // Blur radius for the shadow
-                        offset: Offset(3, 3), // Position of the shadow
+                        color: Colors.black26,
+                        blurRadius: 10,
+                        offset: Offset(3, 3),
                       ),
                     ],
                   ),
@@ -1049,9 +1056,9 @@ class RequestDetailsScreen extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -1851,27 +1858,12 @@ class _RatingAndReportWidgetState extends State<RatingAndReportWidget> {
   double _rating = 0.0;
   double _averageRating = 0.0;
   int _totalReviews = 0;
-  bool _hasRated = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _checkIfRated();
     _fetchAverageRating();
-  }
-
-  Future<void> _checkIfRated() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final ratingDoc =
-          await _firestore.collection('app_ratings').doc(user.uid).get();
-      if (ratingDoc.exists) {
-        setState(() {
-          _hasRated = true;
-          _rating = ratingDoc.data()!['rating'].toDouble();
-        });
-      }
-    }
   }
 
   Future<void> _fetchAverageRating() async {
@@ -1881,9 +1873,18 @@ class _RatingAndReportWidgetState extends State<RatingAndReportWidget> {
       for (var doc in ratingsSnapshot.docs) {
         totalRating += doc.data()['rating'].toDouble();
       }
+      if (mounted) {
+        setState(() {
+          _averageRating = totalRating / ratingsSnapshot.docs.length;
+          _totalReviews = ratingsSnapshot.docs.length;
+          _isLoading = false;
+        });
+      }
+    } else if (mounted) {
       setState(() {
-        _averageRating = totalRating / ratingsSnapshot.docs.length;
-        _totalReviews = ratingsSnapshot.docs.length;
+        _averageRating = 0.0;
+        _totalReviews = 0;
+        _isLoading = false;
       });
     }
   }
@@ -1902,25 +1903,35 @@ class _RatingAndReportWidgetState extends State<RatingAndReportWidget> {
       ).showSnackBar(const SnackBar(content: Text('Please provide a rating.')));
       return;
     }
+    setState(() => _isLoading = true);
     try {
-      await _firestore.collection('app_ratings').doc(user.uid).set({
+      await _firestore.collection('app_ratings').add({
         'user_id': user.uid,
         'user_type': widget.userType,
         'rating': _rating,
         'report': _reportController.text,
         'timestamp': FieldValue.serverTimestamp(),
       });
-      setState(() => _hasRated = true);
       await _fetchAverageRating();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Rating and report submitted successfully!'),
-        ),
-      );
+      if (mounted) {
+        setState(() {
+          _rating = 0.0; // Reset rating after submission
+          _reportController.clear(); // Clear report text
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Rating and report submitted successfully!'),
+          ),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error submitting rating: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error submitting rating: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -1928,97 +1939,95 @@ class _RatingAndReportWidgetState extends State<RatingAndReportWidget> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_totalReviews > 0)
-            Row(
-              children: [
-                Text(
-                  _averageRating.toStringAsFixed(1),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+      child:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_totalReviews > 0)
+                    Row(
+                      children: [
+                        Text(
+                          _averageRating.toStringAsFixed(1),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Row(
+                          children: List.generate(
+                            5,
+                            (index) => Icon(
+                              index < _averageRating.floor()
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              color: Colors.yellow,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'based on $_totalReviews reviews',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Rate the App',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Row(
-                  children: List.generate(
-                    5,
-                    (index) => Icon(
-                      index < _averageRating.floor()
-                          ? Icons.star
-                          : Icons.star_border,
-                      color: Colors.yellow,
-                      size: 24,
+                  const SizedBox(height: 8),
+                  Row(
+                    children: List.generate(
+                      5,
+                      (index) => IconButton(
+                        icon: Icon(
+                          index < _rating ? Icons.star : Icons.star_border,
+                          color: Colors.yellow,
+                          size: 32,
+                        ),
+                        onPressed:
+                            () => setState(
+                              () => _rating = (index + 1).toDouble(),
+                            ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'based on $_totalReviews reviews',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          const SizedBox(height: 16),
-          const Text(
-            'Rate the App',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          _hasRated
-              ? Text(
-                'You have already rated: $_rating stars',
-                style: TextStyle(color: Colors.grey[600]),
-              )
-              : Row(
-                children: List.generate(
-                  5,
-                  (index) => IconButton(
-                    icon: Icon(
-                      index < _rating ? Icons.star : Icons.star_border,
-                      color: Colors.yellow,
-                      size: 32,
-                    ),
-                    onPressed:
-                        () => setState(() => _rating = (index + 1).toDouble()),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Submit a Report (Optional)',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _reportController,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter your feedback or report an issue...',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 4,
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _submitRatingAndReport,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text(
+                        'Submit Rating & Report',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-          const SizedBox(height: 16),
-          const Text(
-            'Submit a Report (Optional)',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _reportController,
-            decoration: const InputDecoration(
-              hintText: 'Enter your feedback or report an issue...',
-              border: OutlineInputBorder(),
-            ),
-            maxLines: 4,
-            enabled: !_hasRated,
-          ),
-          const SizedBox(height: 16),
-          if (!_hasRated)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _submitRatingAndReport,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: const Text(
-                  'Submit Rating & Report',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 
@@ -2026,15 +2035,6 @@ class _RatingAndReportWidgetState extends State<RatingAndReportWidget> {
   void dispose() {
     _reportController.dispose();
     super.dispose();
-  }
-}
-
-class CreditsPage extends StatelessWidget {
-  const CreditsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const RatingAndReportWidget(userType: 'customer');
   }
 }
 
@@ -2069,10 +2069,8 @@ class _ProfilePageState extends State<ProfilePage>
       if (userDoc.exists) {
         final data = userDoc.data();
         if (mounted) {
-          // Check if the widget is still mounted before calling setState
           setState(() {
-            _fullName =
-                data?['name'] ?? 'Unknown'; // Changed from 'fullName' to 'name'
+            _fullName = data?['name'] ?? 'Unknown';
             _email = data?['email'] ?? 'No Email';
             _profileImageUrl = data?['profileImageUrl'];
           });
@@ -2182,18 +2180,11 @@ class _ProfilePageState extends State<ProfilePage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 12, // Enhanced elevation for stronger 3D feel
-        shadowColor: const Color.fromARGB(
-          255,
-          176,
-          176,
-          178,
-        ).withOpacity(0.4), // Softer shadow for depth
+        elevation: 12,
+        shadowColor: const Color.fromARGB(255, 176, 176, 178).withOpacity(0.4),
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(22),
-          ), // Slightly smoother curve
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
         ),
         title: const Text(
           'Profile',
@@ -2216,65 +2207,64 @@ class _ProfilePageState extends State<ProfilePage>
           const SizedBox(width: 10),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.center, // Centering the content
-          children: [
-            // Centering the CircleAvatar and adding 3D effect
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                // Applying a 3D effect using a BoxShadow
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 12.0, // Increased blur for better 3D effect
-                        offset: Offset(5, 5), // Shadow position
-                      ),
-                    ],
-                  ),
-                  child: Container(
+      body: SingleChildScrollView(
+        // Added to handle overflow
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color.fromARGB(
-                          255,
-                          78,
-                          79,
-                          80,
-                        ), // Change the color of the border here
-                        width: 4.0, // Adjust the border width as needed
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 12.0,
+                          offset: Offset(5, 5),
+                        ),
+                      ],
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color.fromARGB(255, 78, 79, 80),
+                          width: 4.0,
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 60,
+                        backgroundImage:
+                            _profileImageUrl != null
+                                ? NetworkImage(_profileImageUrl!)
+                                : const AssetImage('assets/default_profile.png')
+                                    as ImageProvider,
                       ),
                     ),
-                    child: CircleAvatar(
-                      radius: 60,
-                      backgroundImage:
-                          _profileImageUrl != null
-                              ? NetworkImage(_profileImageUrl!)
-                              : const AssetImage('assets/default_profile.png')
-                                  as ImageProvider,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: IconButton(
+                      icon: const Icon(Icons.camera_alt, size: 30),
+                      color: const Color(0xFF4CAF50),
+                      onPressed: _uploadImage,
                     ),
                   ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: IconButton(
-                    icon: const Icon(Icons.camera_alt, size: 30),
-                    onPressed: _uploadImage,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildProfileField('Name', _fullName ?? 'Loading...'),
-            _buildProfileField('Email', _email ?? 'Loading...'),
-          ],
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildProfileField('Name', _fullName ?? 'Loading...'),
+              _buildProfileField('Email', _email ?? 'Loading...'),
+              const SizedBox(height: 24),
+              // Integrated RatingAndReportWidget
+              const RatingAndReportWidget(userType: 'customer'),
+            ],
+          ),
         ),
       ),
     );
